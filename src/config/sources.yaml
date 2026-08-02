@@ -1,0 +1,12 @@
+yahoo:
+    tickers:
+      - AAPL
+      - MSFT
+      - NVDA
+    interval: 1d
+fred:
+    series:
+      - FEDFUNDS
+      - CPIAUCSL
+eurostat:
+    dataset: prc_hicp_midx
