@@ -3,8 +3,12 @@ from abc import ABC, abstractmethod
 
 class DataSource(ABC):
 
+    @property
+    def config_key(self):
+        return "datasource"
+
     @abstractmethod
-    def read(self, **kwargs):
+    def read(self, dataset, **kwargs):
         """Obtiene los datos desde la fuente."""
         pass
 

@@ -1,3 +1,5 @@
+yfinance
+pyspark-stubs
 pyspark~=3.5.0
 pandas~=2.2.1
 requests~=2.33.1

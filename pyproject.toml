@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "macroeconomy"
+version = "0.1.0"
+description = "Lago de datos"
+readme = "README.md"
+requires-python = ">=3.8"
+
+authors = [
+    { name = "Mónica Gost", email = "monigost@ucm.es" }
+]
+
+dependencies = [
+    "yfinance>=0.2,<0.3",
+    "pandas~=2.2.1",
+    "requests~=2.33.1",
+    "websocket-client~=1.9.0",
+    "databricks-sdk~=0.123.0"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+macroeconomy = ["config/*.yaml"]

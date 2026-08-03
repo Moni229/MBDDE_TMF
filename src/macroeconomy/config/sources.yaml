@@ -1,12 +1,13 @@
 yahoo:
-    tickers:
+    datasets:
       - AAPL
       - MSFT
       - NVDA
     interval: 1d
 fred:
-    series:
+    datasets:
       - FEDFUNDS
       - CPIAUCSL
 eurostat:
-    dataset: prc_hicp_midx
+    datasets:
+      - prc_hicp_midx

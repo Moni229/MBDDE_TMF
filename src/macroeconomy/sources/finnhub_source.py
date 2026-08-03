@@ -1,6 +1,6 @@
 import json
 import websocket
-from src.sources.datasource import DataSource
+from macroeconomy.sources.datasource import DataSource
 
 
 class FinnhubSource(DataSource):
@@ -11,14 +11,18 @@ class FinnhubSource(DataSource):
         self.api_key = api_key
         self.ws = None
 
-    def read(self, symbols, on_data):
+    @property
+    def config_key(self):
+        return "finnhub"
+
+    def read(self, dataset, on_data):
 
         socket = f"{self.BASE_URL}?token={self.api_key}"
 
         def on_open(ws):
             print("Conectado a Finnhub")
 
-            for symbol in symbols:
+            for symbol in dataset:
                 ws.send(json.dumps({
                     "type": "subscribe",
                     "symbol": symbol

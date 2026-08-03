@@ -1,5 +1,5 @@
 import requests
-from src.sources.datasource import DataSource
+from macroeconomy.sources.datasource import DataSource
 
 
 class FredSource(DataSource):
@@ -9,12 +9,16 @@ class FredSource(DataSource):
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def read(self, series):
+    @property
+    def config_key(self):
+        return "fred"
+
+    def read(self, dataset):
 
         response = requests.get(
             self.BASE_URL,
             params={
-                "series_id": series,
+                "series_id": dataset,
                 "api_key": self.api_key,
                 "file_type": "json"
             }
