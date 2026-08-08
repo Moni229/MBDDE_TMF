@@ -1,13 +1,67 @@
 yahoo:
-    datasets:
-      - AAPL
-      - MSFT
-      - NVDA
-    interval: 1d
+  datasource: yahoo
+  source:
+    format: cloudFiles
+    schema: yahoo
+    options:
+      cloudFiles.format: parquet
+      cloudFiles.inferColumnTypes: true
+      cloudFiles.schemaEvolutionMode: addNewColumns
+  datasets:
+    - AAPL
+    - MSFT
+    - NVDA
+  sink:
+    layer: bronze
+    partitionBy:
+      - _ingested_at
+  interval: 1d
+
 fred:
-    datasets:
-      - FEDFUNDS
-      - CPIAUCSL
+  datasource: fred
+  source:
+    format: cloudFiles
+    schema: fred
+    options:
+      cloudFiles.format: json
+      cloudFiles.inferColumnTypes: true
+      cloudFiles.schemaEvolutionMode: addNewColumns
+  sink:
+    layer: bronze
+    partitionBy:
+      - _ingested_at
+  datasets:
+    - FEDFUNDS
+    - CPIAUCSL
+
 eurostat:
-    datasets:
-      - prc_hicp_midx
+  datasource: eurostat
+  source:
+    format: cloudFiles
+    schema: eurostat
+    options:
+      cloudFiles.format: json
+      cloudFiles.inferColumnTypes: true
+      cloudFiles.schemaEvolutionMode: addNewColumns
+  sink:
+    layer: bronze
+    partitionBy:
+      - _ingested_at
+  datasets:
+    - prc_hicp_midx
+
+
+finnhub:
+  datasource: finnhub
+  source:
+    format: kafka
+    schema: finnhub
+    options:
+      subscribe: finnhub
+      startingOffsets: earliest
+  sink:
+    layer: bronze
+    partitionBy:
+      - _ingested_at
+  datasets:
+    - trades

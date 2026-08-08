@@ -2,7 +2,7 @@
 TMF para el máster de Big Data &amp; Data Engineering
 
 
-Estructura del repositorio: 
+## Estructura del repositorio: 
 ```
 macroeconomy/
 │
@@ -54,3 +54,11 @@ macroeconomy/
 ├── utils/
 └── notebooks/
 ```
+
+## Tipos de ficheros: 
+### FRED
+Devuelve ficheros txt
+### Eurostat
+Devuelve ficheros txt
+### Yahoo
+Devuelve ficheros parquet

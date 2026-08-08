@@ -9,7 +9,8 @@ from macroeconomy.utils.paths import get_landing_paths
 
 class LandingWriter:
 
-    def __init__(self):
+    def __init__(self, spark: SparkSession):
+        self.spark = spark
         self.landing_paths = get_landing_paths()
 
     def write(
@@ -31,18 +32,10 @@ class LandingWriter:
             f"day={timestamp:%d}"
         )
 
-        spark = SparkSession.getActiveSession()
-
-        if spark is None:
-            spark = (
-                SparkSession.builder
-                .appName("macroeconomy")
-                .getOrCreate()
-            )
         if isinstance(data, dict):
 
             # Guardar un único fichero JSON
-            df = spark.createDataFrame([(json.dumps(data),)], ["value"])
+            df = self.spark.createDataFrame([(json.dumps(data),)], ["value"])
             (
                 df.coalesce(1)
                 .write
@@ -52,7 +45,7 @@ class LandingWriter:
 
         elif isinstance(data, pd.DataFrame):
 
-            spark_df = spark.createDataFrame(data)
+            spark_df = self.spark.createDataFrame(data)
             (
                 spark_df.write
                 .mode("overwrite")
