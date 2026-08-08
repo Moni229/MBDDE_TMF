@@ -6,7 +6,7 @@ from macroeconomy.utils.paths import get_bronze_source_paths, get_bronze_root, g
 
 from macroeconomy.utils.config import load_confluent_config
 
-from src.macroeconomy.utils.paths import get_landing_root
+from macroeconomy.utils.paths import get_landing_root
 
 
 class IngestionReader:
@@ -17,11 +17,10 @@ class IngestionReader:
     def read(
             self,
             ingestion_config: dict, #igual lo cambio por el nombre de la source y dentro pillo la confi especifica
-            datasource: str, # no lo tengo en el otro
-            dataset: str
             # me faltaria el schema_registry y el client_props_path
     ) -> DataFrame:
-
+        datasource = ingestion_config["datasource"]
+        dataset = ingestion_config["dataset"]
         source_config = ingestion_config["source"]
         fmt = source_config["format"]
 

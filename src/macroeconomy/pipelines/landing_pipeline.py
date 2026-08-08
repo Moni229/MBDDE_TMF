@@ -2,13 +2,17 @@ from macroeconomy.sources.datasource import DataSource
 
 from macroeconomy.writers.landing_writer import LandingWriter
 
+from macroeconomy.utils.config import load_configs
+
 
 class LandingPipeline:
 
-    def __init__(self, writer: LandingWriter):
+    def __init__(self, writer: LandingWriter, config_file_name: str = "ingestion_config.yaml"):
         self.writer = writer
+        self.ingestion_configs = load_configs(config_file_name)
 
-    def run(self, source: DataSource, source_config: dict, dataset: str | None = None, ) -> None:
+    def run(self, source: DataSource, source_name: str, dataset: str | None = None, ) -> None:
+        source_config = self.ingestion_configs[source_name]
         dataset_names = [dataset] if dataset else source_config["datasets"]
 
         source_params = {

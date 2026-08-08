@@ -13,11 +13,11 @@ class BronzeWriter:
     def write(
             self,
             df: DataFrame,
-            dataset: str,
             ingestion_config: dict,
     ) -> StreamingQuery:
 
         datasource = ingestion_config["datasource"]
+        dataset = ingestion_config["dataset"]
 
         sink = ingestion_config["sink"]
 

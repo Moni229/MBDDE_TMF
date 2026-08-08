@@ -3,8 +3,8 @@ import yaml
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 
-def load_sources():
-    with open(CONFIG_DIR / "sources.yaml", encoding="utf-8") as f:
+def load_configs(config_file: str = "ingestion_config.yaml") -> dict:
+    with open(CONFIG_DIR / config_file, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

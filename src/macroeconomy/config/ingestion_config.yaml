@@ -1,0 +1,20 @@
+yahoo:
+  datasets:
+    - AAPL
+    - MSFT
+    - NVDA
+  interval: 1d
+
+fred:
+  datasets:
+    - FEDFUNDS
+    - CPIAUCSL
+
+eurostat:
+  datasets:
+    - prc_hicp_midx
+
+
+finnhub:
+  datasets:
+    - trades

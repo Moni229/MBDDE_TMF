@@ -1,5 +1,4 @@
 yahoo:
-  datasource: yahoo
   source:
     format: cloudFiles
     schema: yahoo
@@ -7,18 +6,12 @@ yahoo:
       cloudFiles.format: parquet
       cloudFiles.inferColumnTypes: true
       cloudFiles.schemaEvolutionMode: addNewColumns
-  datasets:
-    - AAPL
-    - MSFT
-    - NVDA
   sink:
     layer: bronze
     partitionBy:
       - _ingested_at
-  interval: 1d
 
 fred:
-  datasource: fred
   source:
     format: cloudFiles
     schema: fred
@@ -30,12 +23,8 @@ fred:
     layer: bronze
     partitionBy:
       - _ingested_at
-  datasets:
-    - FEDFUNDS
-    - CPIAUCSL
 
 eurostat:
-  datasource: eurostat
   source:
     format: cloudFiles
     schema: eurostat
@@ -47,12 +36,9 @@ eurostat:
     layer: bronze
     partitionBy:
       - _ingested_at
-  datasets:
-    - prc_hicp_midx
 
 
 finnhub:
-  datasource: finnhub
   source:
     format: kafka
     schema: finnhub
@@ -63,5 +49,3 @@ finnhub:
     layer: bronze
     partitionBy:
       - _ingested_at
-  datasets:
-    - trades
