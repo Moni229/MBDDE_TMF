@@ -1,0 +1,52 @@
+from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
+
+from macroeconomy.transformer.silver_transformer import SilverTransformer
+
+
+class FredSilverTransformer(SilverTransformer):
+
+    def transform(
+        self,
+        df: DataFrame,
+    ) -> DataFrame:
+
+        return (
+            df
+            .withColumn(
+                "observation",
+                F.explode("observations"),
+            )
+            .select(
+                F.to_date(
+                    F.col("observation.date")
+                ).alias("date"),
+
+                F.col("observation.value")
+                    .cast("double")
+                    .alias("value"),
+
+                F.to_date(
+                    F.col("observation.realtime_start")
+                ).alias("realtime_start"),
+
+                F.to_date(
+                    F.col("observation.realtime_end")
+                ).alias("realtime_end"),
+
+                "_ingested_at",
+                "_source_file",
+            )
+            .withColumn(
+                "year",
+                F.year("date"),
+            )
+            .withColumn(
+                "month",
+                F.month("date"),
+            )
+            .withColumn(
+                "day",
+                F.dayofmonth("date"),
+            )
+        )

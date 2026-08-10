@@ -17,15 +17,6 @@ def get_landing_paths() -> dict[str, str]:
         "finnhub": f"{root}/finnhub"
     }
 
-def get_bronze_source_paths() -> dict[str, str]:
-    """Returns the bronze zone path for each source dataset."""
-    root = get_landing_root()
-    return {
-        "fred": f"{root}/fred",
-        "yahoo": f"{root}/yahoo",
-        "eurostat": f"{root}/eurostat",
-        "finnhub": f"{root}/finnhub"
-    }
 
 def _get_spark() -> SparkSession:
     return SparkSession.getActiveSession()
@@ -36,13 +27,30 @@ def get_catalog() -> str:
 def get_schemas() -> dict[str, str]:
     catalog = get_catalog()
     return {
-        "bronze": f"{catalog}.macroeconomy_bronze"
+        "bronze": f"{catalog}.macroeconomy_bronze",
+        "silver": f"{catalog}.macroeconomy_silver",
     }
 
+def get_layer_root(layer: str) -> str:
+    roots = {
+        "bronze": get_bronze_root(),
+        "silver": get_silver_root(),
+    }
+
+    try:
+        return roots[layer]
+    except KeyError:
+        raise ValueError(
+            f"Unsupported layer '{layer}'. "
+            f"Expected one of: {list(roots.keys())}"
+        )
 
 def get_bronze_root() -> str:
     return f"abfss://{LAKEHOUSE_CONTAINER}@{Settings.STORAGE_ACCOUNT}.dfs.core.windows.net/bronze/macroeconomy"
 
+
+def get_silver_root() -> str:
+    return f"abfss://{LAKEHOUSE_CONTAINER}@{Settings.STORAGE_ACCOUNT}.dfs.core.windows.net/silver/macroeconomy"
 
 class Settings:
     STORAGE_ACCOUNT = os.getenv("ADLS_ACCOUNT_NAME", "mastermgc001sta")

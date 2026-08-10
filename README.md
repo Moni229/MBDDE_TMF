@@ -23,7 +23,7 @@ macroeconomy/
 │
 ├── writers/
 │   ├── landing_writer.py
-│   ├── bronze_writer.py
+│   ├── delta_writer.py
 │   ├── silver_writer.py
 │   └── gold_writer.py
 │

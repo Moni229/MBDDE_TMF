@@ -1,7 +1,9 @@
 from macroeconomy.readers.ingestion_reader import IngestionReader
-from macroeconomy.writers.bronze_writer import BronzeWriter
+from macroeconomy.writers.delta_writer import DeltaWriter
 
 from macroeconomy.utils.config import load_configs
+
+from macroeconomy.utils.constants import BRONZE
 
 
 class BronzePipeline:
@@ -9,31 +11,33 @@ class BronzePipeline:
     def __init__(
             self,
             reader: IngestionReader,
-            writer: BronzeWriter,
-            config_file_name: str = "bronze_config.yaml",
+            writer: DeltaWriter,
+            config_file_name: str = "pipeline_config.yaml",
     ):
         self.reader = reader
         self.writer = writer
-        self.bronze_configs = load_configs(config_file_name)
+        self.pipeline_configs = load_configs(config_file_name)
 
-    def run(self, source: str, dataset: str | None = None, schema=None, kafka_config: dict | None = None):
+    def run(self, datasource: str, dataset: str | None = None, schema=None, kafka_config: dict | None = None):
 
-        bronze_config = self.bronze_configs[source]
+        datasource_config = self.pipeline_configs[datasource]
         # Seleccionar un único dataset: el indicado o el primero de la lista
-        dataset_name = dataset if dataset else bronze_config.get("datasets", [None])[0]
+        dataset_name = dataset if dataset else datasource_config.get("datasets", [None])[0]
         if not dataset_name:
-            raise ValueError("No dataset specified and source_config contains no datasets")
+            raise ValueError("No dataset specified and datasource_config contains no datasets")
 
-        print(f"Processing {getattr(source, 'config_key', source)} - {dataset_name}")
+        source_config: dict = datasource_config["source"]
+        sink_config = datasource_config["sinks"][BRONZE]
 
-        # Construir configuración de ingestión para este dataset
-        ingestion_config = {**bronze_config, "datasource": source, "dataset": dataset_name}
+        print(f"Processing {getattr(datasource, 'config_key', datasource)} - {dataset_name}")
 
         # Leer datos
         df = self.reader.read(
-            ingestion_config
+            datasource,
+            dataset_name,
+            source_config,
         )
         print("=== BRONZE DF ===")
         print(df.columns)
         df.printSchema()
-        self.writer.write(df, ingestion_config)
+        self.writer.write(df, sink_config, BRONZE, datasource, dataset_name)

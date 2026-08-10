@@ -1,0 +1,2 @@
+BRONZE = "bronze"
+SILVER = "silver"

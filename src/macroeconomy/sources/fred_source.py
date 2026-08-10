@@ -20,7 +20,9 @@ class FredSource(DataSource):
             params={
                 "series_id": dataset,
                 "api_key": self.api_key,
-                "file_type": "json"
+                "file_type": "json",
+                "sort_order": "desc",
+                "limit": 1
             }
         )
         response.raise_for_status()

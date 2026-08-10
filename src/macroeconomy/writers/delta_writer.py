@@ -1,34 +1,29 @@
 from pyspark.sql import DataFrame
 from pyspark.sql.streaming import StreamingQuery
 
-from macroeconomy.utils.paths import get_bronze_root, get_schemas
+from macroeconomy.utils.paths import get_layer_root, get_schemas
 
+class DeltaWriter:
 
-class BronzeWriter:
-
-    def __init__(self):
+    def __init__(self, layer: str):
         self.schemas = get_schemas()
-        self.bronze_root = get_bronze_root()
+        self.layer_root = get_layer_root(layer)
 
     def write(
             self,
             df: DataFrame,
-            ingestion_config: dict,
+            sink_config: dict,
+            layer: str,
+            datasource: str,
+            dataset: str
     ) -> StreamingQuery:
-
-        datasource = ingestion_config["datasource"]
-        dataset = ingestion_config["dataset"]
-
-        sink = ingestion_config["sink"]
-
-        layer = sink["layer"]
 
         target_table = (
             f"{self.schemas[layer]}.{datasource}_{dataset}"
         )
 
         bronze_path = (
-            f"{self.bronze_root}/{datasource}/{dataset}"
+            f"{self.layer_root}/{datasource}/{dataset}"
         )
 
         checkpoint = (
@@ -39,11 +34,11 @@ class BronzeWriter:
             f"bronze-{datasource}-{dataset}"
         )
 
-        partition_cols = sink.get("partitionBy", [])
+        partition_cols = sink_config.get("partitionBy", [])
 
         options = {
             "mergeSchema": "true",
-            **sink.get("options", {}),
+            **sink_config.get("options", {}),
         }
 
         writer = (
@@ -61,7 +56,7 @@ class BronzeWriter:
         if partition_cols:
             writer = writer.partitionBy(*partition_cols)
 
-        run_mode = ingestion_config.get(
+        run_mode = sink_config.get(
             "run_mode",
             "batch",
         )

@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import functions as F
 #from confluent_kafka.schema_registry import SchemaRegistryClient
 
-from macroeconomy.utils.paths import get_bronze_source_paths, get_bronze_root, get_landing_root
+from macroeconomy.utils.paths import get_bronze_root, get_landing_root
 
 from macroeconomy.utils.config import load_confluent_config
 
@@ -16,12 +16,11 @@ class IngestionReader:
 
     def read(
             self,
-            ingestion_config: dict, #igual lo cambio por el nombre de la source y dentro pillo la confi especifica
+            datasource: str,
+            dataset: str,
+            source_config: dict, #igual lo cambio por el nombre de la source y dentro pillo la confi especifica
             # me faltaria el schema_registry y el client_props_path
     ) -> DataFrame:
-        datasource = ingestion_config["datasource"]
-        dataset = ingestion_config["dataset"]
-        source_config = ingestion_config["source"]
         fmt = source_config["format"]
 
         if fmt == "cloudFiles":
@@ -29,7 +28,7 @@ class IngestionReader:
 
         elif fmt == "kafka":
             kafka_config = load_confluent_config()
-            return self._read_kafka(ingestion_config, kafka_config)
+            return self._read_kafka(source_config, kafka_config)
 
         else:
             raise NotImplementedError(f"Unsupported format '{fmt}'")

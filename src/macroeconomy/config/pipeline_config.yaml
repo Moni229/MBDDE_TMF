@@ -6,10 +6,15 @@ yahoo:
       cloudFiles.format: parquet
       cloudFiles.inferColumnTypes: true
       cloudFiles.schemaEvolutionMode: addNewColumns
-  sink:
-    layer: bronze
-    partitionBy:
-      - _ingested_at
+  sinks:
+    bronze:
+      partitionBy:
+        - _ingested_at
+    silver:
+      partitionBy:
+        - year
+        - month
+        - day
 
 fred:
   source:
@@ -19,10 +24,15 @@ fred:
       cloudFiles.format: json
       cloudFiles.inferColumnTypes: true
       cloudFiles.schemaEvolutionMode: addNewColumns
-  sink:
-    layer: bronze
-    partitionBy:
-      - _ingested_at
+  sinks:
+    bronze:
+      partitionBy:
+        - _ingested_at
+    silver:
+      partitionBy:
+        - year
+        - month
+        - day
 
 eurostat:
   source:
@@ -32,10 +42,15 @@ eurostat:
       cloudFiles.format: json
       cloudFiles.inferColumnTypes: true
       cloudFiles.schemaEvolutionMode: addNewColumns
-  sink:
-    layer: bronze
-    partitionBy:
-      - _ingested_at
+  sinks:
+    bronze:
+      partitionBy:
+        - _ingested_at
+    silver:
+      partitionBy:
+        - year
+        - month
+        - day
 
 
 finnhub:
@@ -45,7 +60,12 @@ finnhub:
     options:
       subscribe: finnhub
       startingOffsets: earliest
-  sink:
-    layer: bronze
-    partitionBy:
-      - _ingested_at
+  sinks:
+    bronze:
+      partitionBy:
+        - _ingested_at
+    silver:
+      partitionBy:
+        - year
+        - month
+        - day
