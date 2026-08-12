@@ -7,6 +7,10 @@ class DataSource(ABC):
     def config_key(self):
         return "datasource"
 
+    @property
+    def is_streaming(self):
+        return False
+
     @abstractmethod
     def read(self, dataset, **kwargs):
         """Obtiene los datos desde la fuente."""

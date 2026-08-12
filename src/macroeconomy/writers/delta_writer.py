@@ -63,7 +63,7 @@ class DeltaWriter:
 
         if run_mode == "streaming":
             writer = writer.trigger(
-                processingTime="60 seconds"
+                processingTime="10 seconds"
             )
         else:
             writer = writer.trigger(

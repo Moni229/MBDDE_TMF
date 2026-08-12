@@ -17,4 +17,8 @@ eurostat:
 
 finnhub:
   datasets:
-    - trades
+    - NVDA
+    - AMD
+    - MSFT
+    - AAPL
+    - AMZN

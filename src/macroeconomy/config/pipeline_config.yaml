@@ -62,6 +62,7 @@ finnhub:
       startingOffsets: earliest
   sinks:
     bronze:
+      run_mode: streaming
       partitionBy:
         - _ingested_at
     silver:

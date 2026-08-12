@@ -1,7 +1,5 @@
 from macroeconomy.sources.datasource import DataSource
-
 from macroeconomy.writers.landing_writer import LandingWriter
-
 from macroeconomy.utils.config import load_configs
 
 
@@ -25,14 +23,54 @@ class LandingPipeline:
 
             print(f"Processing {source.config_key} - {dataset_name}")
 
+            if source.is_streaming:
+                self._run_streaming(
+                    source=source,
+                    dataset=dataset_name,
+                    source_params=source_params,
+                )
 
-            data = source.read(
-                dataset=dataset_name,
-                **source_params,
-            )
+            else:
+                self._run_batch(
+                    source=source,
+                    dataset=dataset_name,
+                    source_params=source_params,
+                )
 
+    def _run_batch(
+        self,
+        source: DataSource,
+        dataset: str,
+        source_params: dict,
+    ) -> None:
+
+        data = source.read(
+            dataset=dataset,
+            **source_params,
+        )
+
+        self.writer.write(
+            data=data,
+            source=source.config_key,
+            dataset=dataset,
+        )
+
+    def _run_streaming(
+        self,
+        source: DataSource,
+        dataset: str,
+        source_params: dict,
+    ) -> None:
+
+        def on_data(data):
             self.writer.write(
                 data=data,
                 source=source.config_key,
-                dataset=dataset_name
+                dataset=dataset,
             )
+
+        source.read(
+            dataset=dataset,
+            on_data=on_data,
+            **source_params,
+        )
