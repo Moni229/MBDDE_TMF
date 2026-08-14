@@ -10,18 +10,19 @@ class EurostatSource(DataSource):
     def config_key(self):
         return "eurostat"
 
-    def read(self, dataset, time=None):
+    def read(self, dataset, time=None, **params):
         url = f"{self.base_url}/{dataset}"
-        params = {
-            "geo": "EA20",
-            "coicop": "CP00",
-            "unit": "I15"
-        }
 
-        if time is not None:
-            params["time"] = time
+        request_params = params.copy() if params else {}
 
-        response = requests.get(url, params=params)
+        if time:
+            request_params["time"] = time
+
+        response = requests.get(
+            url,
+            params=request_params
+        )
+
         response.raise_for_status()
 
         return response.json()

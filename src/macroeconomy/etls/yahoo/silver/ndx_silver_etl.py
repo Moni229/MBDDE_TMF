@@ -1,34 +1,53 @@
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
-from macroeconomy.transformer.silver_transformer import SilverTransformer
+from macroeconomy.etls.etl_class import ETLClass
 
-class YahooSilverTransformer(SilverTransformer):
+
+class NdxETL(ETLClass):
+
     def transform(self, df: DataFrame) -> DataFrame:
         """
-        Transforma los datos de Yahoo Finance a Bronze.
+        Transforma los datos diarios de Yahoo Finance
+        en una estructura limpia para Silver.
 
-        Las columnas year/month/day se generan a partir de Date
-        y representan la fecha del dato, no la fecha de ingesta.
+        Resultado:
+
+            date
+            adj_close
+            close
+            high
+            low
+            open
+            volume
+            year
+            month
+            day
+            _ingested_at
+            _source_file
         """
 
         # ------------------------------------------------------------
-        # 1. Normalizamos nombres a lowercase
+        # 1. Renombramos y seleccionamos las columnas necesarias
         # ------------------------------------------------------------
 
-        df = df.toDF(*[c.lower() for c in df.columns])
-
-        # ------------------------------------------------------------
-        # 2. Generamos la fecha del dato
-        # ------------------------------------------------------------
-
-        df = df.withColumn(
-            "date",
-            F.to_date("date"),
+        df = df.select(
+            F.col("Date").alias("date"),
+            F.col("Adj_Close").alias("adj_close"),
+            F.col("Close").alias("close"),
+            F.col("High").alias("high"),
+            F.col("Low").alias("low"),
+            F.col("Open").alias("open"),
+            F.col("Volume").alias("volume"),
+            "_ingested_at",
+            "_source_file",
         )
 
         # ------------------------------------------------------------
-        # 3. Generamos las columnas de partición
+        # 2. Generamos las columnas de partición
+        #
+        # Corresponden a la fecha del dato,
+        # NO a la fecha de ingesta.
         # ------------------------------------------------------------
 
         df = (
@@ -39,7 +58,7 @@ class YahooSilverTransformer(SilverTransformer):
         )
 
         # ------------------------------------------------------------
-        # 4. Seleccionamos las columnas de Bronze
+        # 3. Resultado final
         # ------------------------------------------------------------
 
         return df.select(

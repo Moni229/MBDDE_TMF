@@ -1,10 +1,10 @@
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
-from macroeconomy.transformer.silver_transformer import SilverTransformer
+from macroeconomy.etls.etl_class import ETLClass
 
 
-class FredSilverTransformer(SilverTransformer):
+class CipaucslETL(ETLClass):
 
     def transform(
         self,

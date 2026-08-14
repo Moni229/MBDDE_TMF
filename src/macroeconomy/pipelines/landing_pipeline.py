@@ -11,7 +11,13 @@ class LandingPipeline:
 
     def run(self, source: DataSource, source_name: str, dataset: str | None = None, ) -> None:
         source_config = self.ingestion_configs[source_name]
-        dataset_names = [dataset] if dataset else source_config["datasets"]
+        datasets_config = source_config["datasets"]
+
+        if dataset:
+            datasets_config = [
+                d for d in datasets_config
+                if d["name"] == dataset
+            ]
 
         source_params = {
             k: v
@@ -19,7 +25,15 @@ class LandingPipeline:
             if k not in ("source", "datasets")
         }
 
-        for dataset_name in dataset_names:
+        for dataset_config in datasets_config:
+
+            dataset_name = dataset_config["name"]
+            dataset_params = dataset_config.get("params", {})
+
+            params = {
+                **source_params,
+                **dataset_params,
+            }
 
             print(f"Processing {source.config_key} - {dataset_name}")
 
@@ -27,14 +41,14 @@ class LandingPipeline:
                 self._run_streaming(
                     source=source,
                     dataset=dataset_name,
-                    source_params=source_params,
+                    source_params=params,
                 )
 
             else:
                 self._run_batch(
                     source=source,
                     dataset=dataset_name,
-                    source_params=source_params,
+                    source_params=params,
                 )
 
     def _run_batch(

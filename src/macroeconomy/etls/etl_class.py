@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from pyspark.sql import DataFrame
 
 
-class SilverTransformer(ABC):
+class ETLClass(ABC):
 
     @abstractmethod
     def transform(

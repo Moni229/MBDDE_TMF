@@ -3,8 +3,9 @@ from pyspark.sql.streaming import StreamingQuery
 from macroeconomy.readers.delta_reader import DeltaReader
 from macroeconomy.utils.config import load_configs
 from macroeconomy.utils.constants import SILVER
-from macroeconomy.utils.transformers import get_transformer
+from macroeconomy.utils.transformers import get_etl
 from macroeconomy.writers.delta_writer import DeltaWriter
+from macroeconomy.utils.constants import TABLES
 
 
 class SilverPipeline:
@@ -21,11 +22,12 @@ class SilverPipeline:
             dataset: str,
     ) -> StreamingQuery:
 
-        transformer = get_transformer(datasource)
+        bronze_table = TABLES[datasource][dataset]
+        etl = get_etl(bronze_table)
 
         df = self.reader.read(datasource, dataset)
 
-        transformed_df = transformer.transform(
+        transformed_df = etl.transform(
             df,
         )
         datasource_config = self.pipeline_configs[datasource]
