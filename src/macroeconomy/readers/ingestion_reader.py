@@ -27,8 +27,7 @@ class IngestionReader:
             return self._read_cloudfiles(datasource, dataset, source_config)
 
         elif fmt == "kafka":
-            kafka_config = load_confluent_config()
-            return self._read_kafka(source_config, kafka_config)
+            return self._read_kafka(dataset, source_config)
 
         else:
             raise NotImplementedError(f"Unsupported format '{fmt}'")
@@ -58,12 +57,12 @@ class IngestionReader:
 
     def _read_kafka(
             self,
+            dataset: str,
             ingestion_config: dict,
-            kafka_config: dict,
             # schema_registry_client: SchemaRegistryClient = None,
     ) -> DataFrame:
-
-        topic = ingestion_config["source"]["options"].get("subscribe")
+        kafka_config = load_confluent_config()
+        topic = ingestion_config['options'].get('subscribe')
         kafka_options = {
             "kafka.bootstrap.servers": kafka_config["bootstrap.servers"],
             "kafka.security.protocol": kafka_config["security.protocol"],
@@ -91,7 +90,7 @@ class IngestionReader:
                 "value",
                 F.from_json(
                     F.col("_value").cast("string"),
-                    ingestion_config["source"].get("json_schema"),
+                    ingestion_config.get("json_schema"),
                 ),
             )
 

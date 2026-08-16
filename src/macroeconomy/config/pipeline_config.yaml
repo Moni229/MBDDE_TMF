@@ -58,8 +58,11 @@ finnhub:
     format: kafka
     schema: finnhub
     options:
-      subscribe: finnhub
+      subscribe: finnhub_trades
       startingOffsets: earliest
+    key_format: "string"
+    value_format: "json"
+    json_schema: "struct<type:string,data:array<struct<c:array<string>,p:double,s:string,t:bigint,v:bigint>>>"
   sinks:
     bronze:
       run_mode: streaming

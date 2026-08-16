@@ -18,7 +18,7 @@ class BronzePipeline:
         self.writer = writer
         self.pipeline_configs = load_configs(config_file_name)
 
-    def run(self, datasource: str, dataset: str | None = None, schema=None, kafka_config: dict | None = None):
+    def run(self, datasource: str, dataset: str | None = None, schema=None):
 
         datasource_config = self.pipeline_configs[datasource]
         # Seleccionar un único dataset: el indicado o el primero de la lista
