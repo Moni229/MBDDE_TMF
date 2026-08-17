@@ -6,8 +6,5 @@ from pyspark.sql import DataFrame
 class ETLClass(ABC):
 
     @abstractmethod
-    def transform(
-        self,
-        df: DataFrame,
-    ) -> DataFrame:
+    def transform(self, *args, **kwargs) -> DataFrame:
         pass

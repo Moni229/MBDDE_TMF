@@ -3,39 +3,24 @@ from pyspark.sql.streaming import StreamingQuery
 
 from macroeconomy.utils.paths import get_layer_root, get_schemas
 
-from macroeconomy.utils.constants import TABLES
-
 
 class DeltaWriter:
 
     def __init__(self, layer: str):
+        self.layer = layer
         self.schemas = get_schemas()
         self.layer_root = get_layer_root(layer)
 
     def write(
-            self,
-            df: DataFrame,
-            sink_config: dict,
-            layer: str,
-            datasource: str,
-            dataset: str
+        self,
+        df: DataFrame,
+        sink_config: dict,
+        target_table: str,
+        target_path: str,
+        query_name: str,
     ) -> StreamingQuery:
 
-        target_table = (
-            f"{self.schemas[layer]}.{TABLES[datasource][dataset]}"
-        )
-
-        bronze_path = (
-            f"{self.layer_root}/{datasource}/{dataset}"
-        )
-
-        checkpoint = (
-            f"{bronze_path}/_checkpoint"
-        )
-
-        query_name = (
-            f"{layer}-{datasource}-{dataset}"
-        )
+        checkpoint = f"{target_path}/_checkpoint"
 
         partition_cols = sink_config.get("partitionBy", [])
 

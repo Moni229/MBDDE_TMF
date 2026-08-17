@@ -1,5 +1,6 @@
 BRONZE = "bronze"
 SILVER = "silver"
+GOLD = "gold"
 TABLES = {
     "yahoo": {
         "NVDA": "yahoo_nvda",
@@ -21,3 +22,6 @@ TABLES = {
         "NVDA": "finnhub_nvda",
     }
 }
+
+def get_table_name(source: str, dataset: str) -> str:
+    return TABLES[source][dataset]

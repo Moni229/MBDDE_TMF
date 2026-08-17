@@ -7,6 +7,10 @@ from macroeconomy.utils.transformers import get_etl
 from macroeconomy.writers.delta_writer import DeltaWriter
 from macroeconomy.utils.constants import TABLES
 
+from macroeconomy.utils.constants import BRONZE
+
+from macroeconomy.utils.paths import get_schemas, get_layer_root
+
 
 class SilverPipeline:
 
@@ -23,7 +27,7 @@ class SilverPipeline:
     ) -> StreamingQuery:
 
         bronze_table = TABLES[datasource][dataset]
-        etl = get_etl(bronze_table)
+        etl = get_etl(BRONZE, bronze_table)
 
         df = self.reader.read(datasource, dataset)
 
@@ -32,11 +36,23 @@ class SilverPipeline:
         )
         datasource_config = self.pipeline_configs[datasource]
         sink_config = datasource_config["sinks"][SILVER]
+        table_name = TABLES[datasource][dataset]
 
+        target_table = (
+            f"{get_schemas()[SILVER]}.{table_name}"
+        )
+
+        target_path = (
+            f"{get_layer_root(SILVER)}/{datasource}/{dataset}"
+        )
+        query_name = (
+            f"{SILVER}-{datasource}-{dataset}"
+        )
         return self.writer.write(
             transformed_df,
             sink_config,
             SILVER,
-            datasource,
-            dataset
+            target_table,
+            target_path,
+            query_name
         )

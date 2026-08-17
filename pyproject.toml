@@ -18,7 +18,8 @@ dependencies = [
     "requests~=2.33.1",
     "websocket-client~=1.9.0",
     "yfinance>=0.2,<0.3",
-    "databricks-sdk~=0.123.0"
+    "databricks-sdk~=0.123.0",
+    "confluent_kafka>2.0.0"
 ]
 
 [tool.setuptools]

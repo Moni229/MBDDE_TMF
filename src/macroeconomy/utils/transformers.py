@@ -1,16 +1,18 @@
-from macroeconomy.etls.fred.silver.cipaucsl_silver_etl import CipaucslETL
-from macroeconomy.etls.fred.silver.fedfunds_silver_etl import FedFundsETL
-from macroeconomy.etls.fred.silver.dgs10_silver_etl import Dgs10ETL
-from macroeconomy.etls.fred.silver.vixcls_silver_etl import VixclsETL
-from macroeconomy.etls.eurostat.silver.prc_hicp_manr_silver_etl import PrcHipcManrETL
-from macroeconomy.etls.eurostat.silver.sts_inpr_m_silver_etl import StsInprMETL
-from macroeconomy.etls.eurostat.silver.ei_bssi_m_r2_silver_etl import EiBssiMR2ETL
-from macroeconomy.etls.yahoo.silver.nvda_silver_etl import NvdaETL
+from macroeconomy.etls.silver.fred.cipaucsl_silver_etl import CipaucslETL
+from macroeconomy.etls.silver.fred.fedfunds_silver_etl import FedFundsETL
+from macroeconomy.etls.silver.fred.dgs10_silver_etl import Dgs10ETL
+from macroeconomy.etls.silver.fred.vixcls_silver_etl import VixclsETL
+from macroeconomy.etls.silver.eurostat.prc_hicp_manr_silver_etl import PrcHipcManrETL
+from macroeconomy.etls.silver.eurostat.sts_inpr_m_silver_etl import StsInprMETL
+from macroeconomy.etls.silver.eurostat.ei_bssi_m_r2_silver_etl import EiBssiMR2ETL
+from macroeconomy.etls.silver.yahoo.nvda_silver_etl import NvdaETL
 
 from macroeconomy.etls.etl_class import ETLClass
 
-from macroeconomy.etls.yahoo.silver.asml_silver_etl import AsmlAsETL
-from macroeconomy.etls.yahoo.silver.ndx_silver_etl import NdxETL
+from macroeconomy.etls.silver.yahoo.asml_silver_etl import AsmlAsETL
+from macroeconomy.etls.silver.yahoo.ndx_silver_etl import NdxETL
+
+from macroeconomy.etls.gold.fact_market_intraday import FactMarketIntradayETL
 
 SILVER_ETL_REGISTRY = {
     "fred_CPIAUCSL": CipaucslETL,
@@ -24,13 +26,31 @@ SILVER_ETL_REGISTRY = {
     "yahoo_asml": AsmlAsETL,
     "yahoo_ndx": NdxETL
 }
-def get_etl(datasource: str) -> ETLClass:
+
+GOLD_ETL_REGISTRY = {
+    "fact_market_intraday": FactMarketIntradayETL
+}
+
+def get_etl(layer: str, datasource: str) -> ETLClass:
+
+    registries = {
+        "silver": SILVER_ETL_REGISTRY,
+        "gold": GOLD_ETL_REGISTRY,
+    }
 
     try:
-        transformer_class = SILVER_ETL_REGISTRY[datasource]
+        registry = registries[layer.lower()]
     except KeyError:
         raise ValueError(
-            f"No Silver transformer configured for "
+            f"Unsupported layer '{layer}'. "
+            f"Expected one of: {list(registries.keys())}"
+        )
+
+    try:
+        transformer_class = registry[datasource]
+    except KeyError:
+        raise ValueError(
+            f"No {layer.upper()} transformer configured for "
             f"datasource '{datasource}'"
         )
 

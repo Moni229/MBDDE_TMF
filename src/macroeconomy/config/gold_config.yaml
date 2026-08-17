@@ -1,0 +1,38 @@
+fact_market_risk:
+  sources:
+    nvda: silver.yahoo_nvda
+    ndx: silver.yahoo_ndx
+    vix: silver.fred_vixcls
+  target: fact_market_risk
+
+fact_market_rates:
+  sources:
+    nvda: silver.yahoo_nvda
+    ndx: silver.yahoo_ndx
+    dgs10: silver.fred_dgs10
+    fedfunds: silver.fred_fedfunds
+  target: fact_market_rates
+
+fact_us_europe:
+  sources:
+    nvda: silver.yahoo_nvda
+    asml: silver.yahoo_asml
+    ndx: silver.yahoo_ndx
+    cpi: silver.fred_cpi
+    hicp: silver.eurostat_hicp
+    esi: silver.eurostat_esi
+  target: fact_us_europe
+
+fact_market_intraday:
+  sources:
+    yahoo:
+      - NVDA
+      - ASML.AS
+      - ^NDX
+  sinks:
+    gold:
+      partition_by:
+        - year
+        - month
+        - day
+      target_table: "fact_market_intraday"
