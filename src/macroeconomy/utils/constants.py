@@ -19,7 +19,7 @@ TABLES = {
         "VIXCLS": "fred_VIXCLS"
     },
     "finnhub": {
-        "NVDA": "finnhub_nvda",
+        "trades": "finnhub_trades"
     }
 }
 

@@ -69,6 +69,7 @@ finnhub:
       partitionBy:
         - _ingested_at
     silver:
+      run_mode: streaming
       partitionBy:
         - year
         - month

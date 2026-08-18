@@ -3,15 +3,17 @@ import websocket
 from confluent_kafka import Producer
 from macroeconomy.sources.datasource import DataSource
 
+from macroeconomy.utils.config import load_confluent_config
+
 
 class FinnhubSource(DataSource):
 
     BASE_URL = "wss://ws.finnhub.io"
     TOPIC = "finnhub_trades"
 
-    def __init__(self, api_key, kafka_config):
+    def __init__(self, api_key):
         self.api_key = api_key
-        self.kafka_config = kafka_config
+        self.kafka_config = load_confluent_config()
 
         self.ws = None
         self.producer = None
@@ -32,7 +34,7 @@ class FinnhubSource(DataSource):
         producer_config = {
             "bootstrap.servers": self.kafka_config["bootstrap.servers"],
             "security.protocol": self.kafka_config["security.protocol"],
-            "sasl.mechanism": self.kafka_config["sasl.mechanism"],
+            "sasl.mechanism": self.kafka_config["sasl.mechanisms"],
             "sasl.username": self.kafka_config["sasl.username"],
             "sasl.password": self.kafka_config["sasl.password"],
         }

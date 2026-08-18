@@ -37,3 +37,4 @@ eurostat:
 finnhub:
   datasets:
     - name: NVDA
+    - name: MSFT

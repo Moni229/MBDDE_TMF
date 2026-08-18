@@ -27,7 +27,7 @@ class SilverPipeline:
     ) -> StreamingQuery:
 
         bronze_table = TABLES[datasource][dataset]
-        etl = get_etl(BRONZE, bronze_table)
+        etl = get_etl(SILVER, bronze_table)
 
         df = self.reader.read(datasource, dataset)
 
@@ -51,7 +51,6 @@ class SilverPipeline:
         return self.writer.write(
             transformed_df,
             sink_config,
-            SILVER,
             target_table,
             target_path,
             query_name

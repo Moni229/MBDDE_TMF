@@ -14,6 +14,8 @@ from macroeconomy.etls.silver.yahoo.ndx_silver_etl import NdxETL
 
 from macroeconomy.etls.gold.fact_market_intraday import FactMarketIntradayETL
 
+from macroeconomy.etls.silver.finnhub.finnhub_trades_etl import FinnhubTradesETL
+
 SILVER_ETL_REGISTRY = {
     "fred_CPIAUCSL": CipaucslETL,
     "fred_FEDFUNDS": FedFundsETL,
@@ -24,7 +26,8 @@ SILVER_ETL_REGISTRY = {
     "eurostat_ei_bssi_m_r2": EiBssiMR2ETL,
     "yahoo_nvda": NvdaETL,
     "yahoo_asml": AsmlAsETL,
-    "yahoo_ndx": NdxETL
+    "yahoo_ndx": NdxETL,
+    "finnhub_trades": FinnhubTradesETL,
 }
 
 GOLD_ETL_REGISTRY = {
