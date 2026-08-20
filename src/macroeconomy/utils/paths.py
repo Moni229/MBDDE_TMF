@@ -29,12 +29,14 @@ def get_schemas() -> dict[str, str]:
     return {
         "bronze": f"{catalog}.macroeconomy_bronze",
         "silver": f"{catalog}.macroeconomy_silver",
+        "gold": f"{catalog}.macroeconomy_gold",
     }
 
 def get_layer_root(layer: str) -> str:
     roots = {
         "bronze": get_bronze_root(),
         "silver": get_silver_root(),
+        "gold": get_gold_root(),
     }
 
     try:
@@ -51,6 +53,9 @@ def get_bronze_root() -> str:
 
 def get_silver_root() -> str:
     return f"abfss://{LAKEHOUSE_CONTAINER}@{Settings.STORAGE_ACCOUNT}.dfs.core.windows.net/silver/macroeconomy"
+
+def get_gold_root() -> str:
+    return f"abfss://{LAKEHOUSE_CONTAINER}@{Settings.STORAGE_ACCOUNT}.dfs.core.windows.net/gold/macroeconomy"
 
 class Settings:
     STORAGE_ACCOUNT = os.getenv("ADLS_ACCOUNT_NAME", "mastermgc001sta")

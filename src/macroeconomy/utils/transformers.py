@@ -16,6 +16,8 @@ from macroeconomy.etls.gold.fact_market_intraday import FactMarketIntradayETL
 
 from macroeconomy.etls.silver.finnhub.finnhub_trades_etl import FinnhubTradesETL
 
+from macroeconomy.etls.gold.fact_market_daily import FactMarketDailyETL
+
 SILVER_ETL_REGISTRY = {
     "fred_CPIAUCSL": CipaucslETL,
     "fred_FEDFUNDS": FedFundsETL,
@@ -31,7 +33,8 @@ SILVER_ETL_REGISTRY = {
 }
 
 GOLD_ETL_REGISTRY = {
-    "fact_market_intraday": FactMarketIntradayETL
+    "fact_market_intraday": FactMarketIntradayETL,
+    "fact_market_daily": FactMarketDailyETL
 }
 
 def get_etl(layer: str, datasource: str) -> ETLClass:

@@ -19,6 +19,7 @@ class SilverPipeline:
         self.reader = DeltaReader(spark)
         self.writer = DeltaWriter(SILVER)
         self.pipeline_configs = load_configs(config_file_name)
+        self.layer = SILVER
 
     def run(
             self,
@@ -27,26 +28,31 @@ class SilverPipeline:
     ) -> StreamingQuery:
 
         bronze_table = TABLES[datasource][dataset]
-        etl = get_etl(SILVER, bronze_table)
+        etl = get_etl(self.layer, bronze_table)
 
-        df = self.reader.read(datasource, dataset)
+        datasource_config = self.pipeline_configs[datasource]
+        sink_config = datasource_config["sinks"][self.layer]
+        run_mode = sink_config.get(
+            "run_mode",
+            "batch",
+        )
+
+        df = self.reader.read(BRONZE, datasource, dataset, run_mode)
 
         transformed_df = etl.transform(
             df,
         )
-        datasource_config = self.pipeline_configs[datasource]
-        sink_config = datasource_config["sinks"][SILVER]
         table_name = TABLES[datasource][dataset]
 
         target_table = (
-            f"{get_schemas()[SILVER]}.{table_name}"
+            f"{get_schemas()[self.layer]}.{table_name}"
         )
 
         target_path = (
-            f"{get_layer_root(SILVER)}/{datasource}/{dataset}"
+            f"{get_layer_root(self.layer)}/{datasource}/{dataset}"
         )
         query_name = (
-            f"{SILVER}-{datasource}-{dataset}"
+            f"{self.layer}-{datasource}-{dataset}"
         )
         return self.writer.write(
             transformed_df,

@@ -8,9 +8,11 @@ yahoo:
       cloudFiles.schemaEvolutionMode: addNewColumns
   sinks:
     bronze:
+      run_mode: available_now
       partitionBy:
         - _ingested_at
     silver:
+      run_mode: batch
       partitionBy:
         - year
         - month
@@ -26,9 +28,11 @@ fred:
       cloudFiles.schemaEvolutionMode: addNewColumns
   sinks:
     bronze:
+      run_mode: available_now
       partitionBy:
         - _ingested_at
     silver:
+      run_mode: batch
       partitionBy:
         - year
         - month
@@ -44,14 +48,15 @@ eurostat:
       cloudFiles.schemaEvolutionMode: addNewColumns
   sinks:
     bronze:
+      run_mode: available_now
       partitionBy:
         - _ingested_at
     silver:
+      run_mode: batch
       partitionBy:
         - year
         - month
         - day
-
 
 finnhub:
   source:

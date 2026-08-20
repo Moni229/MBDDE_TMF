@@ -3,53 +3,154 @@ from pyspark.sql import functions as F
 
 from macroeconomy.etls.etl_class import ETLClass
 
-from macroeconomy.utils.config import load_configs
+from macroeconomy.utils.constants import DEFAULT_STREAMING_WATERMARK_TIME, DEFAULT_STREAMING_WINDOW_TIME
 
 
 class FactMarketIntradayETL(ETLClass):
 
-    def __init__(self, spark):
-        self.spark = spark
-
-    def transform(self, source_etl_config: dict) -> DataFrame:
+    def transform(
+        self,
+        source_dfs: dict[str, DataFrame],
+        options: dict
+    ) -> DataFrame:
         """
-        Transforma los datos de mercado intradía de Silver a Gold.
+        Agrega los trades de Finnhub en velas de 5 minutos.
 
-        La clave del diccionario representa el símbolo del activo.
+        Entrada:
+            timestamp
+            symbol
+            price
+            volume
+
+        Salida:
+            timestamp
+            symbol
+            open
+            high
+            low
+            close
+            volume
+            trade_count
+            year
+            month
+            day
+
+        El timestamp de la vela representa el inicio de la
+        ventana de 5 minutos.
         """
 
-        if not source_etl_config:
+        if not source_dfs:
             raise ValueError(
-                "No se han proporcionado fuentes para fact_market_intraday"
+                "No se han proporcionado fuentes para "
+                "fact_market_intraday"
             )
 
-        dfs = []
+        df = next(iter(source_dfs.values()))
 
-        for symbol, df in source_etl_config.items():
-            transformed = (
-                df
-                .select(
-                    F.lit(symbol).alias("symbol"),
-                    "Date",
-                    "Adj_Close",
-                    "Close",
-                    "High",
-                    "Low",
-                    "Open",
-                    "Volume",
-                )
+        # ----------------------------------------------------------
+        # Watermark
+        # ----------------------------------------------------------
+
+        watermark = options.get(
+            "watermark",
+            DEFAULT_STREAMING_WATERMARK_TIME
+        )
+
+        df = (
+            df
+            .withWatermark(
+                "trade_timestamp",
+                watermark
             )
+        )
 
-            dfs.append(transformed)
+        # ----------------------------------------------------------
+        # Ventana de 5 minutos
+        # ----------------------------------------------------------
+        window_duration = options.get(
+            "window_duration",
+            DEFAULT_STREAMING_WINDOW_TIME
+        )
 
-        if not dfs:
-            raise ValueError(
-                "No se han proporcionado DataFrames para fact_market_intraday"
+        df = df.withColumn(
+            "window",
+            F.window(
+                F.col("trade_timestamp"),
+                window_duration
             )
+        )
 
-        result = dfs[0]
+        # ----------------------------------------------------------
+        # Agregación OHLCV
+        # ----------------------------------------------------------
 
-        for df in dfs[1:]:
-            result = result.unionByName(df)
+        result = (
+            df
+            .groupBy(
+                "symbol",
+                "window"
+            )
+            .agg(
+                # Primer trade cronológicamente
+                F.min(
+                    F.struct(
+                        F.col("trade_timestamp"),
+                        F.col("price")
+                    )
+                ).alias("first_trade"),
 
-        return result
+                # Último trade cronológicamente
+                F.max(
+                    F.struct(
+                        F.col("trade_timestamp"),
+                        F.col("price")
+                    )
+                ).alias("last_trade"),
+
+                # Precio máximo
+                F.max("price").alias("high"),
+
+                # Precio mínimo
+                F.min("price").alias("low"),
+
+                # Volumen total
+                F.sum("volume").alias("volume"),
+
+                # Número de trades
+                F.count("*").alias("trade_count")
+            )
+            .select(
+                F.col("window.start").alias("trade_timestamp"),
+                F.col("symbol"),
+
+                F.col("first_trade.price").alias("open"),
+
+                F.col("high"),
+                F.col("low"),
+
+                F.col("last_trade.price").alias("close"),
+
+                F.col("volume"),
+                F.col("trade_count")
+            )
+        )
+
+        # ----------------------------------------------------------
+        # Particiones
+        # ----------------------------------------------------------
+
+        return (
+            result
+            .withColumn(
+                "year",
+                F.year("trade_timestamp")
+            )
+            .withColumn(
+                "month",
+                F.month("trade_timestamp")
+            )
+            .withColumn(
+                "day",
+                F.dayofmonth("trade_timestamp")
+            )
+        )
