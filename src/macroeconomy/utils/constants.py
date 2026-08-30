@@ -25,6 +25,8 @@ TABLES = {
 
 DEFAULT_STREAMING_WINDOW_TIME = "5 minutes"
 DEFAULT_STREAMING_WATERMARK_TIME = "5 minutes"
+DEFAULT_MODE = "append"
+DEFAULT_RUN_MODE = "batch"
 
 def get_table_name(source: str, dataset: str) -> str:
     return TABLES[source][dataset]

@@ -23,8 +23,49 @@ fact_market_daily:
       - ASML.AS
       - ^NDX
   sink:
+    mode: overwrite
     partitionBy:
       - year
       - month
       - day
     target_table: "fact_market_daily"
+
+fact_macro:
+  source:
+    - macroeconomy_silver.fred_CPIAUCSL
+    - macroeconomy_silver.fred_FEDFUNDS
+    - macroeconomy_silver.fred_DGS10
+    - macroeconomy_silver.fred_VIXCLS
+    - macroeconomy_silver.eurostat_prc_hicp_manr
+    - macroeconomy_silver.eurostat_sts_inpr_m
+    - macroeconomy_silver.eurostat_ei_bssi_m_r2
+
+  options:
+    symbols:
+      - CPI_US
+      - FED_FUNDS
+      - US_10Y
+      - VIX
+      - HICP_EU
+      - INDUSTRIAL_PRODUCTION_EU
+      - BUSINESS_SENTIMENT_EU
+
+  sink:
+    partition_by:
+      - year
+      - month
+      - day
+    target_table: fact_macro
+
+fact_market_macro:
+  source:
+    - macroeconomy_gold.fact_market_daily
+    - macroeconomy_gold.fact_macro
+  options: {}
+
+  sink:
+    partition_by:
+      - year
+      - month
+      - day
+    target_table: fact_market_macro

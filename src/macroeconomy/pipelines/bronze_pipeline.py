@@ -7,20 +7,20 @@ from macroeconomy.utils.constants import BRONZE
 
 from macroeconomy.utils.constants import TABLES
 from macroeconomy.utils.paths import get_schemas, get_layer_root
+from pyspark.sql import SparkSession
 
 
 class BronzePipeline:
 
     def __init__(
             self,
-            reader: IngestionReader,
-            writer: DeltaWriter,
+            spark: SparkSession,
             config_file_name: str = "pipeline_config.yaml",
     ):
-        self.reader = reader
-        self.writer = writer
-        self.pipeline_configs = load_configs(config_file_name)
+        self.reader = IngestionReader(spark)
         self.layer_root = BRONZE
+        self.writer = DeltaWriter(self.layer_root)
+        self.pipeline_configs = load_configs(config_file_name)
 
     def run(self, datasource: str, dataset: str | None = None, schema=None):
 

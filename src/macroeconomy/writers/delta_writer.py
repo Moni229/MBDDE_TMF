@@ -3,6 +3,8 @@ from pyspark.sql.streaming import StreamingQuery
 
 from macroeconomy.utils.paths import get_layer_root, get_schemas
 
+from macroeconomy.utils.constants import DEFAULT_MODE, DEFAULT_RUN_MODE
+
 
 class DeltaWriter:
 
@@ -22,7 +24,7 @@ class DeltaWriter:
 
         run_mode = sink_config.get(
             "run_mode",
-            "batch",
+            DEFAULT_RUN_MODE,
         )
 
         partition_cols = sink_config.get(
@@ -32,6 +34,7 @@ class DeltaWriter:
 
         options = {
             "mergeSchema": "true",
+            "path": target_path,
             **sink_config.get("options", {}),
         }
 
@@ -41,20 +44,32 @@ class DeltaWriter:
 
         if run_mode == "batch":
 
+            mode = sink_config.get(
+                "mode",
+                DEFAULT_MODE,
+            )
+
             writer = (
                 df.write
                 .format("delta")
                 .options(**options)
-                .mode(
-                    sink_config.get(
-                        "mode",
-                        "append",
-                    )
-                )
+                .mode(mode)
             )
 
             if partition_cols:
                 writer = writer.partitionBy(*partition_cols)
+
+            if mode == "overwrite" and partition_cols:
+
+                replace_where = self._infer_replace_where(
+                    df=df,
+                    partition_cols=partition_cols,
+                )
+
+                writer = writer.option(
+                    "replaceWhere",
+                    replace_where,
+                )
 
             writer.saveAsTable(target_table)
 
@@ -79,8 +94,8 @@ class DeltaWriter:
                 .queryName(query_name)
                 .outputMode(
                     sink_config.get(
-                        "output_mode",
-                        "append",
+                        "mode",
+                        DEFAULT_MODE,
                     )
                 )
             )
@@ -132,3 +147,88 @@ class DeltaWriter:
             f"Unsupported run_mode '{run_mode}'. "
             "Expected: 'batch', 'streaming' or 'available_now'."
         )
+
+    @staticmethod
+    def _infer_replace_where(
+        df: DataFrame,
+        partition_cols: list[str],
+    ) -> str:
+
+        # ----------------------------------------------------------
+        # Comprobar que las columnas existen
+        # ----------------------------------------------------------
+
+        missing_columns = (
+            set(partition_cols) - set(df.columns)
+        )
+
+        if missing_columns:
+            raise ValueError(
+                "Las columnas de partición no existen "
+                f"en el DataFrame: {sorted(missing_columns)}"
+            )
+
+        # ----------------------------------------------------------
+        # Obtener las combinaciones únicas de particiones
+        # ----------------------------------------------------------
+
+        partitions = (
+            df
+            .select(*partition_cols)
+            .distinct()
+            .collect()
+        )
+
+        if not partitions:
+            raise ValueError(
+                "No se pueden inferir las particiones: "
+                "el DataFrame está vacío."
+            )
+
+        # ----------------------------------------------------------
+        # Construir replaceWhere
+        # ----------------------------------------------------------
+
+        conditions = []
+
+        for row in partitions:
+
+            partition_conditions = []
+
+            for column in partition_cols:
+
+                value = row[column]
+
+                if value is None:
+
+                    condition = (
+                        f"{column} IS NULL"
+                    )
+
+                elif isinstance(value, str):
+
+                    escaped_value = (
+                        value.replace("'", "''")
+                    )
+
+                    condition = (
+                        f"{column} = '{escaped_value}'"
+                    )
+
+                else:
+
+                    condition = (
+                        f"{column} = {value}"
+                    )
+
+                partition_conditions.append(
+                    condition
+                )
+
+            conditions.append(
+                "("
+                + " AND ".join(partition_conditions)
+                + ")"
+            )
+
+        return " OR ".join(conditions)

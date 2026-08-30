@@ -8,15 +8,37 @@ class YahooFinanceSource(DataSource):
     def config_key(self):
         return "yahoo"
 
-    def read(self, dataset, period="1d", interval="1d"):
+    def __init__(
+        self,
+        start_date=None,
+        end_date=None,
+        interval="1d"
+    ):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.interval = interval
 
-        df = yf.download(
-            dataset,
-            period=period,
-            interval=interval,
-            auto_adjust=False,
-            progress=False,
-        )
+    def read(self, dataset):
+
+        if self.start_date is None and self.end_date is None:
+            df = yf.download(
+                dataset,
+                period="1d",
+                interval=self.interval,
+                auto_adjust=False,
+                progress=False,
+            )
+
+        else:
+            df = yf.download(
+                dataset,
+                start=self.start_date,
+                end=self.end_date,
+                interval=self.interval,
+                auto_adjust=False,
+                progress=False,
+            )
+
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
 

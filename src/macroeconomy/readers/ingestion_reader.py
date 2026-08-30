@@ -40,7 +40,7 @@ class IngestionReader:
             dataset: str,
             source_config: dict,
     ) -> DataFrame:
-        schema_location = f"{get_bronze_root()}/{datasource}/{dataset}"
+        schema_location = f"{get_bronze_root()}/schemas/{datasource}/{dataset}"
         path = f"{get_landing_root()}/{datasource}/{dataset}"
         df = (
             self.spark.readStream.format("cloudFiles")

@@ -29,6 +29,7 @@ fred:
   sinks:
     bronze:
       run_mode: available_now
+      mode: overwrite
       partitionBy:
         - _ingested_at
     silver:

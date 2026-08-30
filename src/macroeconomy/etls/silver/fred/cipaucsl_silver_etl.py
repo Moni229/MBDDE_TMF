@@ -26,6 +26,10 @@ class CipaucslETL(ETLClass):
                     .cast("double")
                     .alias("value"),
 
+                F.lit("monthly").alias("frequency"),
+
+                F.lit("US").alias("geo"),
+
                 F.to_date(
                     F.col("observation.realtime_start")
                 ).alias("realtime_start"),

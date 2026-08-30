@@ -3,24 +3,30 @@ import requests
 
 class EurostatSource(DataSource):
 
-    def __init__(self, base_url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data"):
+    def __init__(
+            self,
+            base_url="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data",
+            time: list[str] | None = None
+    ):
         self.base_url = base_url
+        self.time = time
 
     @property
     def config_key(self):
         return "eurostat"
 
-    def read(self, dataset, time=None, **params):
+    def read(self, dataset, **params):
         url = f"{self.base_url}/{dataset}"
 
         request_params = params.copy() if params else {}
 
-        if time:
-            request_params["time"] = time
+        if self.time is not None:
+            request_params["time"] = self.time
 
         response = requests.get(
             url,
-            params=request_params
+            params=request_params,
+            timeout=60
         )
 
         response.raise_for_status()

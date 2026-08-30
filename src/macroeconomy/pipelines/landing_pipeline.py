@@ -1,12 +1,13 @@
 from macroeconomy.sources.datasource import DataSource
 from macroeconomy.writers.landing_writer import LandingWriter
 from macroeconomy.utils.config import load_configs
+from pyspark.sql.connect.session import SparkSession
 
 
 class LandingPipeline:
 
-    def __init__(self, writer: LandingWriter, config_file_name: str = "ingestion_config.yaml"):
-        self.writer = writer
+    def __init__(self, spark: SparkSession, config_file_name: str = "ingestion_config.yaml"):
+        self.writer = LandingWriter(spark)
         self.ingestion_configs = load_configs(config_file_name)
 
     def run(self, source: DataSource, source_name: str, dataset: str | None = None, ) -> None:

@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 
 import pandas as pd
+from pandas import Timestamp
 from pyspark.sql import SparkSession
 
 from macroeconomy.utils.paths import get_landing_paths
@@ -20,7 +21,7 @@ class LandingWriter:
         dataset: str,
         timestamp: datetime | None = None
     ):
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or Timestamp.now('UTC')
 
         base_path = self.landing_paths[source]
 

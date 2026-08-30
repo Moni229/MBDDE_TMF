@@ -6,88 +6,51 @@ from macroeconomy.etls.etl_class import ETLClass
 
 class VixclsETL(ETLClass):
 
-    def transform(self, df: DataFrame) -> DataFrame:
-        """
-        Transforma una respuesta JSON de FRED en una fila
-        por observación.
+    def transform(
+        self,
+        df: DataFrame,
+    ) -> DataFrame:
 
-        Resultado:
-
-            date
-            value
-            realtime_start
-            realtime_end
-            year
-            month
-            day
-            _ingested_at
-            _source_file
-        """
-
-        # ------------------------------------------------------------
-        # 1. Una fila por observación
-        # ------------------------------------------------------------
-
-        df = df.select(
-            F.explode("observations").alias("observation"),
-            "_ingested_at",
-            "_source_file",
-        )
-
-        # ------------------------------------------------------------
-        # 2. Extraemos los campos de la observación
-        # ------------------------------------------------------------
-
-        df = df.select(
-            F.to_date(
-                F.col("observation.date"),
-                "yyyy-MM-dd",
-            ).alias("date"),
-
-            F.col("observation.value")
-            .cast("double")
-            .alias("value"),
-
-            F.to_date(
-                F.col("observation.realtime_start"),
-                "yyyy-MM-dd",
-            ).alias("realtime_start"),
-
-            F.to_date(
-                F.col("observation.realtime_end"),
-                "yyyy-MM-dd",
-            ).alias("realtime_end"),
-
-            "_ingested_at",
-            "_source_file",
-        )
-
-        # ------------------------------------------------------------
-        # 3. Columnas de partición
-        #
-        # Corresponden a la fecha del dato,
-        # NO a la fecha de ingesta.
-        # ------------------------------------------------------------
-
-        df = (
+        return (
             df
-            .withColumn("year", F.year("date"))
-            .withColumn("month", F.month("date"))
-            .withColumn("day", F.dayofmonth("date"))
-        )
+            .withColumn(
+                "observation",
+                F.explode("observations"),
+            )
+            .select(
+                F.to_date(
+                    F.col("observation.date")
+                ).alias("date"),
 
-        # ------------------------------------------------------------
-        # 4. Resultado final
-        # ------------------------------------------------------------
+                F.col("observation.value")
+                    .cast("double")
+                    .alias("value"),
 
-        return df.select(
-            "date",
-            "value",
-            "realtime_start",
-            "realtime_end",
-            "year",
-            "month",
-            "day",
-            "_ingested_at",
-            "_source_file",
+                F.lit("daily").alias("frequency"),
+
+                F.lit("US").alias("geo"),
+
+                F.to_date(
+                    F.col("observation.realtime_start")
+                ).alias("realtime_start"),
+
+                F.to_date(
+                    F.col("observation.realtime_end")
+                ).alias("realtime_end"),
+
+                "_ingested_at",
+                "_source_file",
+            )
+            .withColumn(
+                "year",
+                F.year("date"),
+            )
+            .withColumn(
+                "month",
+                F.month("date"),
+            )
+            .withColumn(
+                "day",
+                F.dayofmonth("date"),
+            )
         )

@@ -9,25 +9,13 @@ class StsInprMETL(ETLClass):
     def transform(self, df: DataFrame) -> DataFrame:
 
         # ==========================================================
-        # 1. Obtener las dimensiones y sus tamaños desde el schema
+        # 1. Dimensiones del dataset
         #
-        # NO usamos .first() porque df es un streaming DataFrame.
-        # ==========================================================
-
-        dimensions = df.schema["id"].dataType.elementType
-
-        # `id` es array<string>, por lo que los nombres concretos
-        # de las dimensiones no están disponibles como valores del
-        # schema.
-        #
-        # En este dataset conocemos el orden definido por JSON-stat:
+        # Orden definido por JSON-stat:
         #
         # ["freq", "indic_bt", "nace_r2", "s_adj", "unit", "geo", "time"]
-        #
-        # El orden se obtiene del contenido de `id`, pero al ser
-        # streaming no podemos leerlo con .first().
-        #
-        # Para STS_INPR_M el orden es fijo.
+        # ==========================================================
+
         dimensions = [
             "freq",
             "indic_bt",
@@ -40,19 +28,6 @@ class StsInprMETL(ETLClass):
 
         # ==========================================================
         # 2. Tamaños de las dimensiones
-        #
-        # STS_INPR_M:
-        #
-        # freq     -> 1
-        # indic_bt -> 1
-        # nace_r2  -> 1
-        # s_adj    -> 1
-        # unit     -> 1
-        # geo      -> 1
-        # time     -> 882
-        #
-        # No necesitamos leer `size` del DataFrame.
-        # Lo obtenemos del schema de las categorías.
         # ==========================================================
 
         dimension_sizes = []
@@ -73,23 +48,6 @@ class StsInprMETL(ETLClass):
 
         # ==========================================================
         # 3. Convertir `value` STRUCT en MAP
-        #
-        # El schema contiene:
-        #
-        # value:
-        #     struct<
-        #         456:double,
-        #         457:double,
-        #         ...
-        #     >
-        #
-        # Creamos:
-        #
-        # {
-        #     "456": valor,
-        #     "457": valor,
-        #     ...
-        # }
         # ==========================================================
 
         value_fields = (
@@ -111,16 +69,11 @@ class StsInprMETL(ETLClass):
 
         df = df.withColumn(
             "_values",
-            value_map
+            value_map,
         )
 
         # ==========================================================
         # 4. Una fila por observación
-        #
-        # Explodeamos el MAP, no el STRUCT.
-        #
-        # _index -> 456, 457, 458...
-        # value  -> valor de la observación
         # ==========================================================
 
         df = df.select(
@@ -142,17 +95,13 @@ class StsInprMETL(ETLClass):
         #
         # [freq, indic_bt, nace_r2, s_adj, unit, geo, time]
         #
-        # y:
-        #
-        # [1, 1, 1, 1, 1, 1, 882]
-        #
         # time es la dimensión que cambia más rápidamente.
         # ==========================================================
 
         for i, dimension in enumerate(dimensions):
 
             # ------------------------------------------------------
-            # Obtener los códigos de la dimensión desde el schema
+            # Códigos de la dimensión
             # ------------------------------------------------------
 
             index_fields = (
@@ -165,19 +114,9 @@ class StsInprMETL(ETLClass):
             )
 
             # ------------------------------------------------------
-            # Crear:
+            # Crear mapa:
             #
             # posición -> código
-            #
-            # Ejemplo:
-            #
-            # freq:
-            #     0 -> M
-            #
-            # time:
-            #     0 -> 1953-01
-            #     1 -> 1953-02
-            #     ...
             # ------------------------------------------------------
 
             inverse_map = F.create_map(
@@ -215,7 +154,7 @@ class StsInprMETL(ETLClass):
             )
 
             # ------------------------------------------------------
-            # Recuperar código de dimensión
+            # Recuperar código
             # ------------------------------------------------------
 
             df = df.withColumn(
@@ -223,11 +162,11 @@ class StsInprMETL(ETLClass):
                 F.element_at(
                     inverse_map,
                     dimension_position.cast("string"),
-                )
+                ),
             )
 
         # ==========================================================
-        # 6. Seleccionar columnas
+        # 6. Seleccionar dimensiones y metadatos
         # ==========================================================
 
         df = df.select(
@@ -246,7 +185,7 @@ class StsInprMETL(ETLClass):
         # 1953-02
         # ...
         #
-        # Se convierte en:
+        # se convierte en:
         #
         # 1953-01-01
         # 1953-02-01
@@ -254,34 +193,36 @@ class StsInprMETL(ETLClass):
         # ==========================================================
 
         df = df.withColumn(
-            "observation_date",
+            "date",
             F.to_date(
                 F.concat(
                     F.col("time"),
                     F.lit("-01"),
-                )
-            )
+                ),
+                "yyyy-MM-dd",
+            ),
         )
 
         # ==========================================================
         # 8. Columnas de partición
         #
-        # Corresponden a la fecha del dato.
+        # Corresponden a la fecha del dato,
+        # NO a la fecha de ingesta.
         # ==========================================================
 
         df = (
             df
             .withColumn(
                 "year",
-                F.year("observation_date"),
+                F.year("date"),
             )
             .withColumn(
                 "month",
-                F.month("observation_date"),
+                F.month("date"),
             )
             .withColumn(
                 "day",
-                F.dayofmonth("observation_date"),
+                F.dayofmonth("date"),
             )
         )
 
@@ -290,14 +231,14 @@ class StsInprMETL(ETLClass):
         # ==========================================================
 
         return df.select(
-            "freq",
+            F.lit("monthly").alias("frequency"),
             "indic_bt",
             "nace_r2",
             "s_adj",
             "unit",
             "geo",
             "time",
-            "observation_date",
+            "date",
             "value",
             "year",
             "month",

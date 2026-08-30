@@ -2,13 +2,9 @@ from pyspark.sql.streaming import StreamingQuery
 
 from macroeconomy.readers.delta_reader import DeltaReader
 from macroeconomy.utils.config import load_configs
-from macroeconomy.utils.constants import SILVER
+from macroeconomy.utils.constants import SILVER, BRONZE, TABLES
 from macroeconomy.utils.transformers import get_etl
 from macroeconomy.writers.delta_writer import DeltaWriter
-from macroeconomy.utils.constants import TABLES
-
-from macroeconomy.utils.constants import BRONZE
-
 from macroeconomy.utils.paths import get_schemas, get_layer_root
 
 
@@ -22,9 +18,10 @@ class SilverPipeline:
         self.layer = SILVER
 
     def run(
-            self,
-            datasource: str,
-            dataset: str,
+        self,
+        datasource: str,
+        dataset: str,
+        partitions: list[dict] = None,
     ) -> StreamingQuery:
 
         bronze_table = TABLES[datasource][dataset]
@@ -37,7 +34,13 @@ class SilverPipeline:
             "batch",
         )
 
-        df = self.reader.read(BRONZE, datasource, dataset, run_mode)
+        df = self.reader.read(
+            layer=BRONZE,
+            datasource=datasource,
+            dataset=dataset,
+            run_mode=run_mode,
+            partitions=partitions
+        )
 
         transformed_df = etl.transform(
             df,
@@ -59,5 +62,5 @@ class SilverPipeline:
             sink_config,
             target_table,
             target_path,
-            query_name
+            query_name,
         )

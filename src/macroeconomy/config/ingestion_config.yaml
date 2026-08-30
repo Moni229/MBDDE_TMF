@@ -3,7 +3,6 @@ yahoo:
     - name: NVDA
     - name: ASML.AS
     - name: ^NDX
-  interval: 1d
 
 fred:
   datasets:

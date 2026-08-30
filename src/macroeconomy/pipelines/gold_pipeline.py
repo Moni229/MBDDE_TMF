@@ -21,7 +21,7 @@ class GoldPipeline:
         self.writer = DeltaWriter(GOLD)
         self.gold_configs = load_configs(config_file_name)
 
-    def run(self, etl_name: str) -> None:
+    def run(self, etl_name: str, partitions: list[dict] = None) -> None:
 
         etl = get_etl(GOLD, etl_name)
 
@@ -50,8 +50,10 @@ class GoldPipeline:
             source_dfs[source_table] = self.reader.read(
                 layer = self.layer,
                 table = source_table,
-                run_mode = run_mode
+                run_mode = run_mode,
+                partitions = partitions,
             )
+            print(f"Count of {source_table}: {source_dfs[source_table].count()}")
 
         # ==========================================================
         # 2. Transform
@@ -86,5 +88,5 @@ class GoldPipeline:
             sink_etl_config,
             target_table,
             target_path,
-            query_name
+            query_name,
         )
