@@ -14,9 +14,9 @@ fact_market_intraday:
 
 fact_market_daily:
   source:
-    - macroeconomy_silver.yahoo_NVDA
-    - macroeconomy_silver.yahoo_ASML
-    - macroeconomy_silver.yahoo_NDX
+    - macroeconomy_silver.yahoo_nvda
+    - macroeconomy_silver.yahoo_asml
+    - macroeconomy_silver.yahoo_ndx
   options:
     symbols:
       - NVDA
@@ -32,10 +32,10 @@ fact_market_daily:
 
 fact_macro:
   source:
-    - macroeconomy_silver.fred_CPIAUCSL
-    - macroeconomy_silver.fred_FEDFUNDS
-    - macroeconomy_silver.fred_DGS10
-    - macroeconomy_silver.fred_VIXCLS
+    - macroeconomy_silver.fred_cpiaucsl
+    - macroeconomy_silver.fred_fedfunds
+    - macroeconomy_silver.fred_dgs10
+    - macroeconomy_silver.fred_vixcls
     - macroeconomy_silver.eurostat_prc_hicp_manr
     - macroeconomy_silver.eurostat_sts_inpr_m
     - macroeconomy_silver.eurostat_ei_bssi_m_r2

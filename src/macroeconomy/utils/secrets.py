@@ -1,16 +1,11 @@
-from pyspark.dbutils import DBUtils
-from pyspark.sql import SparkSession
+import base64
 
-spark = SparkSession.builder.getOrCreate()
-dbutils = DBUtils(spark)
+from databricks.sdk import WorkspaceClient
 
 class SecretManager:
 
-    SCOPE = "macroeconomy"
-
     @staticmethod
-    def get(secret_name):
-        return dbutils.secrets.get(
-            scope=SecretManager.SCOPE,
-            key=secret_name
-        )
+    def get_secret(scope, secret_name):
+        w = WorkspaceClient()
+        secret = w.secrets.get_secret(scope=scope, key=secret_name)
+        return base64.b64decode(secret.value).decode("utf-8")

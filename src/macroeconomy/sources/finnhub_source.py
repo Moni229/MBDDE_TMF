@@ -5,14 +5,17 @@ from macroeconomy.sources.datasource import DataSource
 
 from macroeconomy.utils.config import load_confluent_config
 
+from macroeconomy.utils.constants import SECRET_SCOPE, FINNHUB_API_KEY_SECRET
+from macroeconomy.utils.secrets import SecretManager
+
 
 class FinnhubSource(DataSource):
 
     BASE_URL = "wss://ws.finnhub.io"
     TOPIC = "finnhub_trades"
 
-    def __init__(self, api_key):
-        self.api_key = api_key
+    def __init__(self):
+        self.api_key = SecretManager.get_secret(SECRET_SCOPE, FINNHUB_API_KEY_SECRET)
         self.kafka_config = load_confluent_config()
 
         self.ws = None

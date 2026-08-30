@@ -2,6 +2,9 @@ import requests
 
 from macroeconomy.sources.datasource import DataSource
 
+from macroeconomy.utils.constants import FRED_API_KEY_SECRET, SECRET_SCOPE
+from macroeconomy.utils.secrets import SecretManager
+
 
 class FredSource(DataSource):
 
@@ -9,11 +12,10 @@ class FredSource(DataSource):
 
     def __init__(
         self,
-        api_key,
         start_date=None,
         end_date=None
     ):
-        self.api_key = api_key
+        self.api_key = SecretManager.get_secret(SECRET_SCOPE, FRED_API_KEY_SECRET)
         self.start_date = start_date
         self.end_date = end_date
 
