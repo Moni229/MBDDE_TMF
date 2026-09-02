@@ -5,40 +5,22 @@ from macroeconomy.etls.etl_class import ETLClass
 
 
 class PrcHipcManrETL(ETLClass):
+    """Normaliza la serie mensual HICP de Eurostat en filas de Silver"""
 
     def transform(self, df: DataFrame) -> DataFrame:
-
-        # ==========================================================
-        # 1. Convertimos los STRUCT dinámicos de Eurostat a MAP
-        # ==========================================================
-
-        df = (
-            df
-            .withColumn(
-                "time_index",
-                F.from_json(
-                    F.to_json("dimension.time.category.index"),
-                    "map<string,bigint>",
-                ),
-            )
-            .withColumn(
-                "values",
-                F.from_json(
-                    F.to_json("value"),
-                    "map<string,double>",
-                ),
-            )
+        df = df.withColumn(
+            "time_index",
+            F.from_json(
+                F.to_json("dimension.time.category.index"),
+                "map<string,bigint>",
+            ),
+        ).withColumn(
+            "values",
+            F.from_json(
+                F.to_json("value"),
+                "map<string,double>",
+            ),
         )
-
-        # ==========================================================
-        # 2. Creamos el mapa:
-        #
-        #     posición -> periodo
-        #
-        #     0 -> 1996-01
-        #     1 -> 1996-02
-        #     ...
-        # ==========================================================
 
         df = df.withColumn(
             "time_by_index",
@@ -53,48 +35,20 @@ class PrcHipcManrETL(ETLClass):
             ),
         )
 
-        # ==========================================================
-        # 3. Una fila por observación
-        # ==========================================================
-
-        df = (
-            df
-            .select(
-                F.col(
-                    "dimension.freq.category.label.M"
-                ).alias("frequency"),
-
-                F.col(
-                    "dimension.geo.category.label.EA20"
-                ).alias("geo"),
-
-                F.col(
-                    "dimension.coicop.category.label"
-                ).alias("coicop"),
-
-                F.col(
-                    "dimension.unit.category.label"
-                ).alias("unit"),
-
-                F.explode("values").alias(
-                    "position",
-                    "value",
-                ),
-
-                "time_by_index",
-
-                F.col("updated"),
-                F.col("id"),
-                F.col("source"),
-                F.col("version"),
-                F.col("_ingested_at"),
-                F.col("_source_file"),
-            )
+        df = df.select(
+            F.col("dimension.freq.category.label.M").alias("frequency"),
+            F.col("dimension.geo.category.label.EA20").alias("geo"),
+            F.col("dimension.coicop.category.label").alias("coicop"),
+            F.col("dimension.unit.category.label").alias("unit"),
+            F.explode("values").alias("position", "value"),
+            "time_by_index",
+            F.col("updated"),
+            F.col("id"),
+            F.col("source"),
+            F.col("version"),
+            F.col("_ingested_at"),
+            F.col("_source_file"),
         )
-
-        # ==========================================================
-        # 4. Recuperamos el periodo
-        # ==========================================================
 
         df = df.withColumn(
             "date",
@@ -104,44 +58,19 @@ class PrcHipcManrETL(ETLClass):
             ),
         )
 
-        # ==========================================================
-        # 5. Convertimos YYYY-MM a fecha
-        # ==========================================================
-
         df = df.withColumn(
             "date",
             F.to_date(
-                F.concat(
-                    F.col("date"),
-                    F.lit("-01"),
-                ),
+                F.concat(F.col("date"), F.lit("-01")),
                 "yyyy-MM-dd",
             ),
         )
 
-        # ==========================================================
-        # 6. Columnas de partición
-        # ==========================================================
-
         df = (
-            df
-            .withColumn(
-                "year",
-                F.year("date"),
-            )
-            .withColumn(
-                "month",
-                F.month("date"),
-            )
-            .withColumn(
-                "day",
-                F.dayofmonth("date"),
-            )
+            df.withColumn("year", F.year("date"))
+            .withColumn("month", F.month("date"))
+            .withColumn("day", F.dayofmonth("date"))
         )
-
-        # ==========================================================
-        # 7. Resultado final
-        # ==========================================================
 
         return df.select(
             "date",

@@ -1,17 +1,24 @@
+"""Writer de tablas Delta en modos batch y streaming"""
+
 from pyspark.sql import DataFrame
 from pyspark.sql.streaming import StreamingQuery
 
-from macroeconomy.utils.paths import get_layer_root, get_schemas
-
-from macroeconomy.utils.constants import DEFAULT_MODE, DEFAULT_RUN_MODE
+from macroeconomy.utils.constants import (
+    DEFAULT_OUTPUT_MODE,
+    DEFAULT_STREAMING_TRIGGER_TIME,
+    DELTA_FORMAT,
+    RUN_MODE_AVAILABLE_NOW,
+    RUN_MODE_BATCH,
+    RUN_MODE_STREAMING,
+    WRITE_MODE_OVERWRITE,
+)
 
 
 class DeltaWriter:
+    """Persiste DataFrames en tablas Delta gestionadas"""
 
     def __init__(self, layer: str):
         self.layer = layer
-        self.schemas = get_schemas()
-        self.layer_root = get_layer_root(layer)
 
     def write(
         self,
@@ -21,126 +28,64 @@ class DeltaWriter:
         target_path: str,
         query_name: str,
     ) -> StreamingQuery | None:
-
-        run_mode = sink_config.get(
-            "run_mode",
-            DEFAULT_RUN_MODE,
-        )
-
-        partition_cols = sink_config.get(
-            "partitionBy",
-            []
-        )
-
+        run_mode = sink_config.get("run_mode", RUN_MODE_BATCH)
+        partition_cols = sink_config.get("partitionBy", [])
         options = {
             "mergeSchema": "true",
             "path": target_path,
             **sink_config.get("options", {}),
         }
 
-        # ==========================================================
-        # Batch
-        # ==========================================================
+        if run_mode == RUN_MODE_BATCH:
+            mode = sink_config.get("mode", DEFAULT_OUTPUT_MODE)
 
-        if run_mode == "batch":
-
-            mode = sink_config.get(
-                "mode",
-                DEFAULT_MODE,
-            )
-
-            writer = (
-                df.write
-                .format("delta")
-                .options(**options)
-                .mode(mode)
-            )
+            writer = df.write.format(DELTA_FORMAT).options(**options).mode(mode)
 
             if partition_cols:
                 writer = writer.partitionBy(*partition_cols)
 
-            if mode == "overwrite" and partition_cols:
-
+            if mode == WRITE_MODE_OVERWRITE and partition_cols:
                 replace_where = self._infer_replace_where(
                     df=df,
                     partition_cols=partition_cols,
                 )
-
-                writer = writer.option(
-                    "replaceWhere",
-                    replace_where,
-                )
+                writer = writer.option("replaceWhere", replace_where)
 
             writer.saveAsTable(target_table)
-
             return None
 
-        # ==========================================================
-        # Streaming
-        # ==========================================================
-
-        if run_mode == "streaming":
-
+        if run_mode == RUN_MODE_STREAMING:
             checkpoint = f"{target_path}/_checkpoint"
 
             writer = (
-                df.writeStream
-                .format("delta")
+                df.writeStream.format(DELTA_FORMAT)
                 .options(**options)
-                .option(
-                    "checkpointLocation",
-                    checkpoint,
-                )
+                .option("checkpointLocation", checkpoint)
                 .queryName(query_name)
-                .outputMode(
-                    sink_config.get(
-                        "mode",
-                        DEFAULT_MODE,
-                    )
-                )
+                .outputMode(sink_config.get("mode", DEFAULT_OUTPUT_MODE))
             )
 
             if partition_cols:
                 writer = writer.partitionBy(*partition_cols)
 
-            writer = writer.trigger(
-                processingTime="10 seconds"
-            )
-
+            writer = writer.trigger(processingTime=DEFAULT_STREAMING_TRIGGER_TIME)
             return writer.toTable(target_table)
 
-        # ==========================================================
-        # Streaming + availableNow
-        # ==========================================================
-
-        if run_mode == "available_now":
-
+        if run_mode == RUN_MODE_AVAILABLE_NOW:
             checkpoint = f"{target_path}/_checkpoint"
 
             writer = (
-                df.writeStream
-                .format("delta")
+                df.writeStream.format(DELTA_FORMAT)
                 .options(**options)
-                .option(
-                    "checkpointLocation",
-                    checkpoint,
-                )
+                .option("checkpointLocation", checkpoint)
                 .queryName(query_name)
-                .outputMode(
-                    sink_config.get(
-                        "output_mode",
-                        "append",
-                    )
-                )
+                .outputMode(sink_config.get("output_mode", DEFAULT_OUTPUT_MODE))
             )
 
             if partition_cols:
                 writer = writer.partitionBy(*partition_cols)
 
-            writer = writer.trigger(
-                availableNow=True
-            )
-
+            writer = writer.trigger(availableNow=True)
             return writer.toTable(target_table)
 
         raise ValueError(
@@ -153,14 +98,7 @@ class DeltaWriter:
         df: DataFrame,
         partition_cols: list[str],
     ) -> str:
-
-        # ----------------------------------------------------------
-        # Comprobar que las columnas existen
-        # ----------------------------------------------------------
-
-        missing_columns = (
-            set(partition_cols) - set(df.columns)
-        )
+        missing_columns = set(partition_cols) - set(df.columns)
 
         if missing_columns:
             raise ValueError(
@@ -168,67 +106,31 @@ class DeltaWriter:
                 f"en el DataFrame: {sorted(missing_columns)}"
             )
 
-        # ----------------------------------------------------------
-        # Obtener las combinaciones únicas de particiones
-        # ----------------------------------------------------------
-
-        partitions = (
-            df
-            .select(*partition_cols)
-            .distinct()
-            .collect()
-        )
+        partitions = df.select(*partition_cols).distinct().collect()
 
         if not partitions:
             raise ValueError(
-                "No se pueden inferir las particiones: "
-                "el DataFrame está vacío."
+                "No se pueden inferir las particiones: " "el DataFrame está vacío."
             )
-
-        # ----------------------------------------------------------
-        # Construir replaceWhere
-        # ----------------------------------------------------------
 
         conditions = []
 
         for row in partitions:
-
             partition_conditions = []
 
             for column in partition_cols:
-
                 value = row[column]
 
                 if value is None:
-
-                    condition = (
-                        f"{column} IS NULL"
-                    )
-
+                    condition = f"{column} IS NULL"
                 elif isinstance(value, str):
-
-                    escaped_value = (
-                        value.replace("'", "''")
-                    )
-
-                    condition = (
-                        f"{column} = '{escaped_value}'"
-                    )
-
+                    escaped_value = value.replace("'", "''")
+                    condition = f"{column} = '{escaped_value}'"
                 else:
+                    condition = f"{column} = {value}"
 
-                    condition = (
-                        f"{column} = {value}"
-                    )
+                partition_conditions.append(condition)
 
-                partition_conditions.append(
-                    condition
-                )
-
-            conditions.append(
-                "("
-                + " AND ".join(partition_conditions)
-                + ")"
-            )
+            conditions.append("(" + " AND ".join(partition_conditions) + ")")
 
         return " OR ".join(conditions)

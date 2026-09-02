@@ -1,25 +1,30 @@
-from macroeconomy.sources.datasource import DataSource
-import yfinance as yf
+"""Fuente de Yahoo Finance para datos históricos de mercado."""
+
 import pandas as pd
+import yfinance as yf
+
+from macroeconomy.sources.datasource import DataSource
+from macroeconomy.utils.constants import YAHOO_CONFIG_KEY
+
 
 class YahooFinanceSource(DataSource):
-
-    @property
-    def config_key(self):
-        return "yahoo"
+    """Obtiene histórico de precios desde Yahoo Finance."""
 
     def __init__(
         self,
         start_date=None,
         end_date=None,
-        interval="1d"
+        interval="1d",
     ):
         self.start_date = start_date
         self.end_date = end_date
         self.interval = interval
 
-    def read(self, dataset):
+    @property
+    def config_key(self):
+        return YAHOO_CONFIG_KEY
 
+    def read(self, dataset):
         if self.start_date is None and self.end_date is None:
             df = yf.download(
                 dataset,
@@ -28,7 +33,6 @@ class YahooFinanceSource(DataSource):
                 auto_adjust=False,
                 progress=False,
             )
-
         else:
             df = yf.download(
                 dataset,
@@ -42,9 +46,5 @@ class YahooFinanceSource(DataSource):
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
 
-        df.columns = [
-            column.replace(" ", "_")
-            for column in df.columns
-        ]
-
+        df.columns = [column.replace(" ", "_") for column in df.columns]
         return df.reset_index()

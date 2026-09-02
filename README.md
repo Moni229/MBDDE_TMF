@@ -86,6 +86,16 @@ project/
 ```
 ---
 
+## Módulos principales
+
+* `src/macroeconomy/sources/`: conectores a APIs y flujos de datos.
+* `src/macroeconomy/readers/` y `src/macroeconomy/writers/`: lectura y persistencia en Delta y landing.
+* `src/macroeconomy/etls/`: transformaciones Silver y Gold.
+* `src/macroeconomy/pipelines/`: orquestación de cada capa.
+* `src/macroeconomy/utils/`: constantes, rutas y carga de configuración.
+
+---
+
 ## Fuentes de datos
 
 El proyecto integra datos procedentes de cuatro fuentes diferentes. Estas fuentes proporcionan tanto información financiera de mercado como indicadores macroeconómicos y utilizan diferentes mecanismos de acceso y procesamiento.

@@ -1,21 +1,25 @@
-from macroeconomy.readers.ingestion_reader import IngestionReader
-from macroeconomy.writers.delta_writer import DeltaWriter
+"""Orquestación del pipeline de Bronze."""
 
-from macroeconomy.utils.config import load_configs
-
-from macroeconomy.utils.constants import BRONZE
-
-from macroeconomy.utils.constants import TABLES
-from macroeconomy.utils.paths import get_schemas, get_layer_root
 from pyspark.sql import SparkSession
+
+from macroeconomy.readers.ingestion_reader import IngestionReader
+from macroeconomy.utils.config import load_configs
+from macroeconomy.utils.constants import (
+    BRONZE,
+    CONFIG_PIPELINE_FILE,
+    TABLES,
+)
+from macroeconomy.utils.paths import get_layer_root, get_schemas
+from macroeconomy.writers.delta_writer import DeltaWriter
 
 
 class BronzePipeline:
+    """Ingesta los datos de landing en tablas Delta de Bronze."""
 
     def __init__(
-            self,
-            spark: SparkSession,
-            config_file_name: str = "pipeline_config.yaml",
+        self,
+        spark: SparkSession,
+        config_file_name: str = CONFIG_PIPELINE_FILE,
     ):
         self.reader = IngestionReader(spark)
         self.layer_root = BRONZE
@@ -23,19 +27,19 @@ class BronzePipeline:
         self.pipeline_configs = load_configs(config_file_name)
 
     def run(self, datasource: str, dataset: str | None = None, schema=None):
-
         datasource_config = self.pipeline_configs[datasource]
-        # Seleccionar un único dataset: el indicado o el primero de la lista
-        dataset_name = dataset if dataset else datasource_config.get("datasets", [None])[0]
+        dataset_name = dataset or datasource_config.get("datasets", [None])[0]
+
         if not dataset_name:
-            raise ValueError("No dataset specified and datasource_config contains no datasets")
+            raise ValueError(
+                "No se indicó ningún dataset y datasource_config no contiene datasets"
+            )
 
         source_config: dict = datasource_config["source"]
         sink_config = datasource_config["sinks"][self.layer_root]
 
-        print(f"Processing {getattr(datasource, 'config_key', datasource)} - {dataset_name}")
+        print(f"Processing {datasource} - {dataset_name}")
 
-        # Leer datos
         df = self.reader.read(
             datasource,
             dataset_name,
@@ -44,17 +48,12 @@ class BronzePipeline:
         print("=== BRONZE DF ===")
         print(df.columns)
 
-        table_name = TABLES[datasource][dataset]
+        table_name = TABLES[datasource][dataset_name]
+        target_table = f"{get_schemas()[self.layer_root]}.{table_name}"
+        target_path = f"{get_layer_root(self.layer_root)}/{datasource}/{dataset_name}"
+        query_name = f"{self.layer_root}-{datasource}-{dataset_name}"
 
-        target_table = (
-            f"{get_schemas()[self.layer_root]}.{table_name}"
+        query = self.writer.write(
+            df, sink_config, target_table, target_path, query_name
         )
-
-        target_path = (
-            f"{get_layer_root(self.layer_root)}/{datasource}/{dataset}"
-        )
-        query_name = (
-            f"{self.layer_root}-{datasource}-{dataset}"
-        )
-        query = self.writer.write(df, sink_config, target_table, target_path, query_name)
         return query

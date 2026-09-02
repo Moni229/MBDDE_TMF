@@ -1,19 +1,25 @@
+"""Fuente HTTP de FRED para series macroeconómicas históricas."""
+
 import requests
 
 from macroeconomy.sources.datasource import DataSource
-
-from macroeconomy.utils.constants import FRED_API_KEY_SECRET, SECRET_SCOPE
+from macroeconomy.utils.constants import (
+    FRED_API_KEY_SECRET,
+    FRED_CONFIG_KEY,
+    SECRET_SCOPE,
+)
 from macroeconomy.utils.secrets import SecretManager
 
 
 class FredSource(DataSource):
+    """Obtiene observaciones de FRED mediante la API pública."""
 
     BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
 
     def __init__(
         self,
         start_date=None,
-        end_date=None
+        end_date=None,
     ):
         self.api_key = SecretManager.get_secret(SECRET_SCOPE, FRED_API_KEY_SECRET)
         self.start_date = start_date
@@ -21,10 +27,9 @@ class FredSource(DataSource):
 
     @property
     def config_key(self):
-        return "fred"
+        return FRED_CONFIG_KEY
 
     def read(self, dataset):
-
         request_params = {
             "series_id": dataset,
             "api_key": self.api_key,
@@ -32,14 +37,11 @@ class FredSource(DataSource):
         }
 
         if self.start_date is None and self.end_date is None:
-            # Último dato disponible
             request_params["sort_order"] = "desc"
             request_params["limit"] = 1
-
         else:
             if self.start_date is not None:
                 request_params["observation_start"] = self.start_date
-
             if self.end_date is not None:
                 request_params["observation_end"] = self.end_date
 
@@ -48,9 +50,8 @@ class FredSource(DataSource):
         response = requests.get(
             self.BASE_URL,
             params=request_params,
-            timeout=60
+            timeout=60,
         )
 
         response.raise_for_status()
-
         return response.json()

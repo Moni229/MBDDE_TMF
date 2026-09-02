@@ -1,3 +1,5 @@
+"""Resuelve implementaciones ETL por capa y nombre de fuente."""
+
 from macroeconomy.etls.silver.fred.cipaucsl_silver_etl import CipaucslETL
 from macroeconomy.etls.silver.fred.fedfunds_silver_etl import FedFundsETL
 from macroeconomy.etls.silver.fred.dgs10_silver_etl import Dgs10ETL
@@ -43,8 +45,8 @@ GOLD_ETL_REGISTRY = {
     "fact_market_macro": FactMarketMacroETL,
 }
 
-def get_etl(layer: str, datasource: str) -> ETLClass:
 
+def get_etl(layer: str, datasource: str) -> ETLClass:
     registries = {
         "silver": SILVER_ETL_REGISTRY,
         "gold": GOLD_ETL_REGISTRY,

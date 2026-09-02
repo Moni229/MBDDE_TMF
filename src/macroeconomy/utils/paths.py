@@ -1,28 +1,35 @@
+"""Utilidades para construir rutas del lakehouse de Databricks."""
+
 import os
+
 from pyspark.sql import SparkSession
 
 LANDING_CONTAINER = "landing"
 LAKEHOUSE_CONTAINER = "lakehouse"
 
+
 def get_landing_root() -> str:
     return f"abfss://{LANDING_CONTAINER}@{Settings.STORAGE_ACCOUNT}.dfs.core.windows.net/macroeconomy"
 
+
 def get_landing_paths() -> dict[str, str]:
-    """Returns the landing zone path for each source dataset."""
+    """Devuelve la ruta de landing para cada conjunto de datos de origen."""
     root = get_landing_root()
     return {
         "fred": f"{root}/fred",
         "yahoo": f"{root}/yahoo",
         "eurostat": f"{root}/eurostat",
-        "finnhub": f"{root}/finnhub"
+        "finnhub": f"{root}/finnhub",
     }
 
 
 def _get_spark() -> SparkSession:
     return SparkSession.getActiveSession()
 
+
 def get_catalog() -> str:
     return _get_spark().catalog.currentCatalog()
+
 
 def get_schemas() -> dict[str, str]:
     catalog = get_catalog()
@@ -31,6 +38,7 @@ def get_schemas() -> dict[str, str]:
         "silver": f"{catalog}.macroeconomy_silver",
         "gold": f"{catalog}.macroeconomy_gold",
     }
+
 
 def get_layer_root(layer: str) -> str:
     roots = {
@@ -43,9 +51,10 @@ def get_layer_root(layer: str) -> str:
         return roots[layer]
     except KeyError:
         raise ValueError(
-            f"Unsupported layer '{layer}'. "
-            f"Expected one of: {list(roots.keys())}"
+            f"Capa no soportada '{layer}'. "
+            f"Se esperaba una de: {list(roots.keys())}"
         )
+
 
 def get_bronze_root() -> str:
     return f"abfss://{LAKEHOUSE_CONTAINER}@{Settings.STORAGE_ACCOUNT}.dfs.core.windows.net/bronze/macroeconomy"
@@ -54,8 +63,10 @@ def get_bronze_root() -> str:
 def get_silver_root() -> str:
     return f"abfss://{LAKEHOUSE_CONTAINER}@{Settings.STORAGE_ACCOUNT}.dfs.core.windows.net/silver/macroeconomy"
 
+
 def get_gold_root() -> str:
     return f"abfss://{LAKEHOUSE_CONTAINER}@{Settings.STORAGE_ACCOUNT}.dfs.core.windows.net/gold/macroeconomy"
+
 
 class Settings:
     STORAGE_ACCOUNT = os.getenv("ADLS_ACCOUNT_NAME", "mastermgc001sta")

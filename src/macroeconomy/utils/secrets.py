@@ -2,6 +2,7 @@ import base64
 
 from databricks.sdk import WorkspaceClient
 
+
 class SecretManager:
 
     @staticmethod

@@ -5,17 +5,17 @@ from macroeconomy.utils.paths import get_schemas
 
 def setup_lakehouse(spark: SparkSession | None = None) -> None:
     """
-    Creates the FarmIA schemas and operational Delta tables if they don't exist.
+    Crea los esquemas de FarmIA y las tablas Delta operacionales si no existen.
 
-    Can be called from a notebook, a job entry-point, or a CI pipeline.
+    Puede llamarse desde un notebook, un punto de entrada de job o un pipeline de CI.
 
-    Args:
-        spark: Active SparkSession. If None, the running session is used.
+    Parámetros:
+        spark: SparkSession activa. Si es None, se usa la sesión en ejecución.
     """
     if spark is None:
         spark = SparkSession.getActiveSession()
         if spark is None:
-            raise RuntimeError("No active SparkSession found.")
+            raise RuntimeError("No se encontró ninguna SparkSession activa.")
 
     schemas = get_schemas()
 

@@ -5,12 +5,9 @@ from macroeconomy.etls.etl_class import ETLClass
 
 
 class FactMacroETL(ETLClass):
+    """Combina indicadores macroeconómicos de Silver en Gold."""
 
-    def transform(
-        self,
-        source_dfs: dict[str, DataFrame],
-        options: dict
-    ) -> DataFrame:
+    def transform(self, source_dfs: dict[str, DataFrame], options: dict) -> DataFrame:
         """
         Transforma los indicadores macroeconómicos de Silver a Gold.
 
@@ -25,37 +22,28 @@ class FactMacroETL(ETLClass):
         """
 
         if not source_dfs:
-            raise ValueError(
-                "No se han proporcionado fuentes para fact_macro"
-            )
+            raise ValueError("No se han proporcionado fuentes para fact_macro")
 
         symbols = options.get("symbols", [])
 
         if len(symbols) != len(source_dfs):
             raise ValueError(
-                "El número de symbols debe coincidir "
-                "con el número de fuentes"
+                "El número de symbols debe coincidir " "con el número de fuentes"
             )
 
         dfs = []
 
-        for symbol, (source_table, df) in zip(
-            symbols,
-            source_dfs.items()
-        ):
+        for symbol, (_source_table, df) in zip(symbols, source_dfs.items()):
 
-            transformed = (
-                df
-                .select(
-                    F.lit(symbol).alias("symbol"),
-                    "date",
-                    "value",
-                    "frequency",
-                    "geo",
-                    "year",
-                    "month",
-                    "day",
-                )
+            transformed = df.select(
+                F.lit(symbol).alias("symbol"),
+                "date",
+                "value",
+                "frequency",
+                "geo",
+                "year",
+                "month",
+                "day",
             )
 
             dfs.append(transformed)

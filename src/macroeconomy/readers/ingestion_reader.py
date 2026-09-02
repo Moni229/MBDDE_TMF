@@ -1,68 +1,68 @@
+"""Reader de datos ingestados en landing"""
+
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import functions as F
-#from confluent_kafka.schema_registry import SchemaRegistryClient
 
 from macroeconomy.utils.paths import get_bronze_root, get_landing_root
 
 from macroeconomy.utils.config import load_confluent_config
-
-from macroeconomy.utils.paths import get_landing_root
+from macroeconomy.utils.constants import (
+    DEFAULT_CONFLUENT_CONFIG_PATH,
+    SOURCE_FORMAT_CLOUDFILES,
+    SOURCE_FORMAT_KAFKA,
+    VALUE_FORMAT_STRING,
+    VALUE_FORMAT_JSON,
+    VALUE_FORMAT_AVRO,
+)
 
 
 class IngestionReader:
+    """Lee ficheros de landing o streams de Kafka en DataFrames de Spark."""
 
     def __init__(self, spark: SparkSession):
         self.spark = spark
 
     def read(
-            self,
-            datasource: str,
-            dataset: str,
-            source_config: dict, #igual lo cambio por el nombre de la source y dentro pillo la confi especifica
-            # me faltaria el schema_registry y el client_props_path
+        self,
+        datasource: str,
+        dataset: str,
+        source_config: dict,
     ) -> DataFrame:
         fmt = source_config["format"]
 
-        if fmt == "cloudFiles":
+        if fmt == SOURCE_FORMAT_CLOUDFILES:
             return self._read_cloudfiles(datasource, dataset, source_config)
 
-        elif fmt == "kafka":
+        if fmt == SOURCE_FORMAT_KAFKA:
             return self._read_kafka(dataset, source_config)
 
-        else:
-            raise NotImplementedError(f"Unsupported format '{fmt}'")
-
-    # ------------------------------------------------------------------
+        raise NotImplementedError(f"Unsupported format '{fmt}'")
 
     def _read_cloudfiles(
-            self,
-            datasource: str,
-            dataset: str,
-            source_config: dict,
+        self,
+        datasource: str,
+        dataset: str,
+        source_config: dict,
     ) -> DataFrame:
         schema_location = f"{get_bronze_root()}/schemas/{datasource}/{dataset}"
         path = f"{get_landing_root()}/{datasource}/{dataset}"
         df = (
-            self.spark.readStream.format("cloudFiles")
+            self.spark.readStream.format(SOURCE_FORMAT_CLOUDFILES)
             .options(**source_config["options"])
             .option("cloudFiles.schemaLocation", schema_location)
             .load(path)
         )
-        return (
-            df.withColumn("_ingested_at", F.current_timestamp())
-              .withColumn("_source_file", F.input_file_name())
+        return df.withColumn("_ingested_at", F.current_timestamp()).withColumn(
+            "_source_file", F.input_file_name()
         )
 
-    # ------------------------------------------------------------------
-
     def _read_kafka(
-            self,
-            dataset: str,
-            ingestion_config: dict,
-            # schema_registry_client: SchemaRegistryClient = None,
+        self,
+        dataset: str,
+        ingestion_config: dict,
     ) -> DataFrame:
-        kafka_config = load_confluent_config()
-        topic = ingestion_config['options'].get('subscribe')
+        kafka_config = load_confluent_config(DEFAULT_CONFLUENT_CONFIG_PATH)
+        topic = ingestion_config["options"].get("subscribe")
         kafka_options = {
             "kafka.bootstrap.servers": kafka_config["bootstrap.servers"],
             "kafka.security.protocol": kafka_config["security.protocol"],
@@ -74,8 +74,7 @@ class IngestionReader:
         }
 
         df = (
-            self.spark.readStream
-            .format("kafka")
+            self.spark.readStream.format(SOURCE_FORMAT_KAFKA)
             .options(**kafka_options)
             .load()
         )
@@ -83,9 +82,9 @@ class IngestionReader:
         columns = [F.col(column).alias(f"_{column}") for column in df.columns]
         df = df.select(*columns)
 
-        value_format = ingestion_config.get("value_format", "string")
+        value_format = ingestion_config.get("value_format", VALUE_FORMAT_STRING)
 
-        if value_format == "json":
+        if value_format == VALUE_FORMAT_JSON:
             df = df.withColumn(
                 "value",
                 F.from_json(
@@ -94,17 +93,8 @@ class IngestionReader:
                 ),
             )
 
-        if value_format == "avro":
-            if not schema_registry_client:
-                raise ValueError("schema_registry_conf is required for avro format.")
-            value_subject = f"{topic}-value"
-            value_schema = schema_registry_client.get_latest_version(
-                value_subject
-            ).schema.schema_str
-            df = df.withColumn("key", F.col("_key").cast("string")).withColumn(
-                "value",
-                # from_avro(F.expr("substring(_value,6,length(_value)-5)"), value_schema),
-            )
+        if value_format == VALUE_FORMAT_AVRO:
+            raise NotImplementedError("Avro ingestion is not implemented yet.")
 
         return (
             df.withColumn("_ingested_at", F.current_timestamp())
