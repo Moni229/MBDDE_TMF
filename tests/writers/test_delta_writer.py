@@ -96,7 +96,9 @@ def test_write_available_now_triggers_availableNow_and_returns_query():
     writer_chain.outputMode.return_value = writer_chain
     writer_chain.partitionBy.return_value = writer_chain
     writer_chain.trigger.return_value = writer_chain
-    writer_chain.toTable.return_value = "available_query"
+    query = Mock()
+    query.exception.return_value = None
+    writer_chain.toTable.return_value = query
 
     dw = DeltaWriter(layer="bronze")
     res = dw.write(
@@ -107,9 +109,11 @@ def test_write_available_now_triggers_availableNow_and_returns_query():
         query_name="q2",
     )
 
-    assert res == "available_query"
+    assert res is query
     writer_chain.trigger.assert_called_once_with(availableNow=True)
     writer_chain.option.assert_any_call("checkpointLocation", "/tmp/target2/_checkpoint")
+    query.awaitTermination.assert_called_once()
+    query.exception.assert_called_once()
 
 
 def test_write_invalid_run_mode_raises():
