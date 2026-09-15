@@ -1,0 +1,39 @@
+yahoo:
+  datasets:
+    - name: NVDA
+    - name: ASML.AS
+    - name: ^NDX
+
+fred:
+  datasets:
+    - name: FEDFUNDS
+    - name: CPIAUCSL
+    - name: DGS10
+    - name: VIXCLS
+
+eurostat:
+  datasets:
+    - name: prc_hicp_manr
+      params:
+        geo: EA20
+        coicop: CP00
+        unit: RCH_A
+
+    - name: sts_inpr_m
+      params:
+        geo: EA20
+        nace_r2: B-D
+        unit: I21
+        s_adj: SCA
+
+    - name: ei_bssi_m_r2
+      params:
+        geo: EA20
+        indic: BS-ESI-I
+        s_adj: SA
+
+
+finnhub:
+  datasets:
+    - name: NVDA
+    - name: MSFT
