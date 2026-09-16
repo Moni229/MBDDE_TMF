@@ -270,11 +270,11 @@ Clonar el repositorio:
 git clone <url-del-repositorio>
 cd <nombre-del-repositorio>
 ```
-
-Instalar el proyecto y sus dependencias:
+Generar artefacto:
 
 ```bash
-pip install -e .
+python -m pip install build                                                         
+python -m build --wheel
 ```
 
 Configurar las variables de entorno y credenciales necesarias antes de ejecutar los pipelines.
