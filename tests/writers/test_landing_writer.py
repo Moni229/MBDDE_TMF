@@ -23,10 +23,11 @@ def test_write_dict_writes_text_file(spark, tmp_path, monkeypatch):
     expected = Path(tmp_path) / "NVDA" / "year=2020" / "month=05" / "day=06"
     assert Path(out_path) == expected
 
-    files = list(expected.iterdir())
-    assert any(f.is_file() for f in files)
+    # Spark writes part-* files, ignore .crc checksum files
+    files = list(expected.rglob("part-*"))
+    assert len(files) >= 1
 
-    txt_file = next(f for f in files if f.is_file())
+    txt_file = files[0]
     content = txt_file.read_text(encoding="utf-8").strip()
     loaded = json.loads(content)
     assert loaded == {"a": 1, "b": "x"}
