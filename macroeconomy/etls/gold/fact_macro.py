@@ -43,7 +43,6 @@ class FactMacroETL(ETLClass):
                 "day",
             )
 
-            # CPI USA: calcular variación interanual
             if symbol == "CPI_US":
 
                 window = Window.partitionBy("geo").orderBy("date")

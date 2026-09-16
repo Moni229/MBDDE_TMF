@@ -29,13 +29,10 @@ class EurostatSource(DataSource):
     ):
         self.base_url = base_url
 
-        # Validaciones básicas en el constructor: `time` es excluyente con
-        # start/end y start/end deben aparecer ambos si se proporcionan.
         if time is not None and (start_date is not None or end_date is not None):
             raise ValueError("`time` is mutually exclusive with `start_date`/`end_date`")
 
         if (start_date is None) ^ (end_date is None):
-            # XOR: sólo uno está presente
             raise ValueError("Both `start_date` and `end_date` must be provided together")
 
         self.time = time
@@ -80,30 +77,22 @@ class EurostatSource(DataSource):
         url = f"{self.base_url}/{dataset}"
         request_params = params.copy() if params else {}
 
-        # Si la instancia tiene `time` o start/end definidas, estas sirven
-        # como valores por defecto que pueden ser sobreescritos por `params`.
-        # Primero comprobamos conflictos y presencia en `params`.
         param_has_time = "time" in request_params and request_params["time"] is not None
         param_has_start = "start_date" in request_params and request_params["start_date"] is not None
         param_has_end = "end_date" in request_params and request_params["end_date"] is not None
 
-        # Conflictos entre formas de expresar el periodo
         if (self.time is not None or (self.start_date is not None and self.end_date is not None)) and param_has_time:
             raise ValueError("`time` provided both in constructor and in read params")
 
         if param_has_time and (param_has_start or param_has_end):
             raise ValueError("`time` is mutually exclusive with `start_date`/`end_date` in params")
 
-        # Si params incluye start/end, validamos que estén ambas
         if param_has_start ^ param_has_end:
             raise ValueError("Both `start_date` and `end_date` must be provided together in params")
 
-        # Prioridad: params > instance attributes
         if param_has_time:
-            # se deja tal cual (se espera lista o string acorde a la API)
             pass
         elif param_has_start and param_has_end:
-            # Generar lista mensual y sustituir en request_params
             request_params["time"] = self._months_range(request_params.pop("start_date"), request_params.pop("end_date"))
         elif self.time is not None:
             request_params["time"] = self.time

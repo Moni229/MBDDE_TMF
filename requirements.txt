@@ -1,5 +1,0 @@
-yfinance
-pandas~=2.2.1
-requests~=2.33.1
-websocket-client~=1.9.0
-databricks-sdk~=0.123.0

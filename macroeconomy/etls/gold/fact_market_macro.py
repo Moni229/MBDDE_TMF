@@ -62,10 +62,6 @@ class FactMarketMacroETL(ETLClass):
                 "No se ha encontrado fact_macro"
             )
 
-        # ============================================================
-        # 1. MERCADO: DIARIO -> MENSUAL
-        # ============================================================
-
         market_df = (
             market_df
             .select(
@@ -81,7 +77,6 @@ class FactMarketMacroETL(ETLClass):
             )
         )
 
-        # Último día disponible de cada mes para cada activo.
         last_market_day_window = (
             Window
             .partitionBy("symbol", "month_date")
@@ -99,8 +94,6 @@ class FactMarketMacroETL(ETLClass):
             .withColumnRenamed("month_date", "date")
         )
 
-        # Rentabilidad mensual: cierre del mes actual
-        # frente al cierre del mes anterior.
         market_return_window = (
             Window
             .partitionBy("symbol")
@@ -128,10 +121,6 @@ class FactMarketMacroETL(ETLClass):
             .drop("previous_adj_close")
         )
 
-        # ============================================================
-        # 2. MACRO: PREPARACIÓN
-        # ============================================================
-
         macro_df = (
             macro_df
             .select(
@@ -155,13 +144,6 @@ class FactMarketMacroETL(ETLClass):
             )
         )
 
-        # ============================================================
-        # 3. VARIABLES DIARIAS -> MEDIA MENSUAL
-        #
-        # VIX
-        # US_10Y
-        # ============================================================
-
         daily_macro_monthly = (
             macro_df
             .filter(
@@ -178,12 +160,6 @@ class FactMarketMacroETL(ETLClass):
             )
         )
 
-        # ============================================================
-        # 4. VARIABLES YA MENSUALES
-        #
-        # Se conserva el valor mensual.
-        # ============================================================
-
         monthly_macro = (
             macro_df
             .filter(
@@ -197,11 +173,6 @@ class FactMarketMacroETL(ETLClass):
                 "value",
             )
         )
-
-        # ============================================================
-        # 5. INDUSTRIAL PRODUCTION:
-        # ÍNDICE -> VARIACIÓN INTERANUAL (%)
-        # ============================================================
 
         industrial_production = (
             monthly_macro
@@ -253,10 +224,6 @@ class FactMarketMacroETL(ETLClass):
             )
         )
 
-        # ============================================================
-        # 6. UNIÓN DE VARIABLES MACRO
-        # ============================================================
-
         macro_monthly_long = (
             daily_macro_monthly
             .unionByName(other_monthly_macro)
@@ -272,10 +239,6 @@ class FactMarketMacroETL(ETLClass):
             "INDUSTRIAL_PRODUCTION_EU_YOY",
             "BUSINESS_SENTIMENT_EU",
         ]
-
-        # ============================================================
-        # 7. PIVOT: UNA FILA POR MES
-        # ============================================================
 
         macro_monthly = (
             macro_monthly_long
@@ -293,10 +256,6 @@ class FactMarketMacroETL(ETLClass):
             )
         )
 
-        # ============================================================
-        # 8. UNIÓN MERCADO + MACRO
-        # ============================================================
-
         result = (
             market_monthly
             .join(
@@ -305,10 +264,6 @@ class FactMarketMacroETL(ETLClass):
                 how="left",
             )
         )
-
-        # ============================================================
-        # 9. COLUMNAS DE PARTICIÓN
-        # ============================================================
 
         result = (
             result

@@ -65,16 +65,15 @@ Los datos se obtienen de múltiples fuentes, se procesan a través de diferentes
 ```text
 project/
 │
-├── src/
-│   └── macroeconomy/
-│       ├── config/             # Configuración de pipelines y fuentes de datos
-│       ├── etls/               # ETLs de cada capa que lo requiera (silver y gold)
-│       ├── pipelines/          # Pipelines de ingesta y procesamiento
-│       ├── readers/            # Readers de ficheros y de delta tables
-│       ├── sources/            # Llamadas a APIs externas y fuentes de datos
-        ├── utils/              # Utilidades compartidas
-        ├── writers/            # Writers de ficheros y de delta tables
-│       └── setup.py            # Setup inicial del proyecto
+├── macroeconomy/
+│   ├── config/             # Configuración de pipelines y fuentes de datos
+│   ├── etls/               # ETLs de cada capa que lo requiera (silver y gold)
+│   ├── pipelines/          # Pipelines de ingesta y procesamiento
+│   ├── readers/            # Readers de ficheros y de delta tables
+│   ├── sources/            # Llamadas a APIs externas y fuentes de datos
+│   ├── utils/              # Utilidades compartidas
+│   ├── writers/            # Writers de ficheros y de delta tables
+│   └── setup.py            # Setup inicial del proyecto
 │
 ├── notebooks/                  # Notebooks de Databricks
 │
@@ -88,11 +87,11 @@ project/
 
 ## Módulos principales
 
-* `src/macroeconomy/sources/`: conectores a APIs y flujos de datos.
-* `src/macroeconomy/readers/` y `src/macroeconomy/writers/`: lectura y persistencia en Delta y landing.
-* `src/macroeconomy/etls/`: transformaciones Silver y Gold.
-* `src/macroeconomy/pipelines/`: orquestación de cada capa.
-* `src/macroeconomy/utils/`: constantes, rutas y carga de configuración.
+* `macroeconomy/sources/`: conectores a APIs y flujos de datos.
+* `macroeconomy/readers/` y `macroeconomy/writers/`: lectura y persistencia en Delta y landing.
+* `macroeconomy/etls/`: transformaciones Silver y Gold.
+* `macroeconomy/pipelines/`: orquestación de cada capa.
+* `macroeconomy/utils/`: constantes, rutas y carga de configuración.
 
 ---
 
@@ -272,10 +271,10 @@ git clone <url-del-repositorio>
 cd <nombre-del-repositorio>
 ```
 
-Instalar las dependencias necesarias:
+Instalar el proyecto y sus dependencias:
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 Configurar las variables de entorno y credenciales necesarias antes de ejecutar los pipelines.
